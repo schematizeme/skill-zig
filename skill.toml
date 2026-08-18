@@ -3,7 +3,7 @@ name = "schematize-zig"
 tag = "Sistemas · Zig"
 status = "beta"
 order = 10
-current_version = "0.1.0"
+current_version = "0.1.1"
 href = "/zig"
 
 [descriptions]

@@ -13,7 +13,7 @@ instalados em `.claude/commands/`):
 | `/zig-claude` | Cria ou **atualiza (sobrescreve)** o `CLAUDE.md` da raiz com a versão atual da skill (backup se houver customização local). |
 | `/zig-cc` | Context compact: gera `context.md` + `checklist.md` em `<projeto>_archive/context/` e roda `/compact`. |
 | `/zig-handoff` | Gera o handoff (`context.md` + `checklist.md`) **sem** compactar — ideal pra fim de sessão ou troca de tarefa. |
-| `/zig-qa` | Fluxo de Q.A. plan-first (§22.9): planeja tudo, gera MD de passo a passo, pede aprovação, e roda faseado/assistido ou de uma vez. |
+| `/zig-qa` | Q.A. no contexto Zig (aplica a schematize-qa: `/qa-plan` → `/qa-run`) com `zig test`/`zig build test`. |
 | `/zig-review` | Roda o gate da Definition of Done e dos anti-padrões (§35, §37): arquivo >750 linhas bloqueia / >300 úteis flag, função sem doc-comment, índice desatualizado, macaquices de segurança. |
 | `/zig-iam` | Força/audita/scaffolda o IAM da casa (identidade≠email, ≥2 fatores, ReBAC multi-tenant deny-default, sessão longa/logout irreversível) como app separada em `auth.<domain>` (auth costuma pedir Rust/Go por fit — registra ADR), ou porta um auth legado (prioridade 0). |
 | `/zig-index` | (Re)gera o índice de microfunções (§39) a partir dos doc-comments das funções. |

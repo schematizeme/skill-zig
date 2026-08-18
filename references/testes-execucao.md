@@ -1,6 +1,6 @@
 # Testes — Execução, Pentest e Q.A.
 
-> Parte da skill **schematize-zig**. Continuação de `testes.md` (numeração **preservada**, §22.4+): padrão de script de teste, seeds/personas, integração com CI, pentest (§22.7–22.8), fluxo de Q.A. plan-first (§22.9) e o build padrão (§23). Toolchain e versões em `references/stack-versoes.md`; ownership/leak em `references/memoria-concorrencia.md`.
+> Parte da skill **schematize-zig**. Continuação de `testes.md` (numeração **preservada**, §22.4+): padrão de script de teste, seeds/personas, integração com CI, pentest (§22.7–22.8) e o build padrão (§23). A **disciplina de execução de Q.A.** (plan-first) foi extraída para a skill dedicada **schematize-qa** (`/qa-plan` → `/qa-run`). Toolchain e versões em `references/stack-versoes.md`; ownership/leak em `references/memoria-concorrencia.md`.
 
 ---
 
@@ -145,36 +145,11 @@ Os scripts da §22.3 são a implementação; estes são os princípios que regem
 
 ---
 
-### 22.9 Fluxo de execução de Q.A. (plan-first, aprovação obrigatória)
+### Q.A. — disciplina na skill schematize-qa
 
-A malha de Q.A. inclui passos potencialmente destrutivos (chaos `service-kill`/`db-disconnect`, pentest, geração de input adversarial em massa). Por isso **nenhuma submissão de Q.A. roda às cegas**: toda submissão de um formulário/pedido de Q.A. passa por planejamento, aprovação humana e execução controlada.
+A execução de Q.A. (plan-first, aprovação obrigatória) foi extraída para a skill dedicada **schematize-qa**: o fluxo `/qa-plan` → `/qa-run` planeja tudo, gera o MD de passo a passo em `<projeto>_archive/qa/`, **pede aprovação antes de rodar** e executa faseado/assistido ou de uma vez com watchdog, travando nos gates.
 
-**MUST — antes de executar qualquer coisa**
-
-1. **Planejar tudo primeiro.** Ao receber a submissão, o agente **não executa nada ainda**. Levanta o escopo completo: quais modos vão rodar (smoke/integration/security/pentest/authz/hardening/chaos/simulated/unit), ambiente alvo, rotas e personas afetadas, ordem de execução, dependências entre passos, o que é **destrutivo/gated**, e os riscos.
-2. **Gerar um MD de passo a passo detalhado** em `<project>_archive/qa/<YYYY-MM-DD-HH-MM-SS>-<contexto>.md` (liga com §28 — é archive obrigatório). Cada passo declara: objetivo, comando exato, ambiente, resultado esperado, critério de pass/fail, e flag de **destrutivo** quando aplicável. O plano referencia o `summary.json` (§22.2) que será produzido.
-3. **Pedir aprovação explícita do usuário.** Sem aprovação registrada, **nada roda**. O agente apresenta o plano e aguarda o "ok". Aprovação parcial (subconjunto de passos) é válida e vira o escopo efetivo.
-
-**MUST — após aprovado**
-
-4. **Oferecer a modalidade de execução.** O agente pergunta como rodar:
-   - **Faseado e assistido** — executa por fase, **pausa entre fases** para revisão/confirmação, mostra resultado parcial e só segue com o "continuar". Default recomendado para staging sensível e para qualquer plano com passo destrutivo.
-   - **De uma vez (autônomo)** — executa o plano inteiro sem parar.
-5. **No modo "de uma vez":**
-   - **Multiagentes para produção da execução** — paralelizar categorias independentes (ex.: `security`, `authz`, `hardening`, `pentest`, `simulated` em workers separados), respeitando dependências declaradas no plano e os limites de concorrência (§9 backpressure).
-   - **Cron/watchdog de continuidade ininterrupta** — um agendador supervisiona a execução e a **retoma de checkpoint até concluir**, sem exigir intervenção manual se um worker cair. A "conclusão" é condição de parada explícita: todos os passos aprovados terminaram, **ou** uma falha bloqueante escalou para o humano. Checkpoints são **idempotentes** (§19) e a retomada não reexecuta passo já concluído.
-
-**MUST — segurança do fluxo (herda do resto do §22)**
-
-- Passo destrutivo (`service-kill`, `db-disconnect`, drop, geração em massa) **só roda se constava no plano aprovado** e com o gate de ambiente ligado (ex.: `<PROJECT>_CHAOS_ALLOW=1` — §22.3). Aprovação do plano não dispensa o gate.
-- Modo autônomo "de uma vez" roda por default só em `dev`/`staging`. Produção exige confirmação adicional explícita no momento da execução (alinha com §22.8 — alvo autorizado).
-- **Sem retry infinito** no watchdog: a continuidade tem limite de tentativas por passo, backoff, e escala para humano ao estourar (§9, §18). "Ininterrupto até finalizar" é retomar até concluir, **não** repetir pra sempre.
-
-**VETADO**
-
-- Pular o plano ou a aprovação "pra ir mais rápido" — é macaquice na linha da §37 (atalho que troca segurança por velocidade). Q.A. sem plano aprovado registrado **não roda**.
-
-> O plano aprovado é o contrato da execução. Multiagente e cron aceleram o *como*, nunca dispensam o *o quê foi autorizado*.
+No recorte **Zig**, o Q.A. usa as ferramentas de teste da linguagem — `zig test` / `zig build test`, blocos `test { ... }` com `std.testing.allocator` (leak vira FAIL) — e o pentest da schematize-pentest. O comando `/zig-qa` é o wrapper fino que aplica a schematize-qa nesse recorte. Nenhum Q.A. roda sem plano aprovado registrado.
 
 ---
 

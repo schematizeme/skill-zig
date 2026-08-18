@@ -78,10 +78,11 @@ Lista completa com veto + caminho certo: ver `references/anti-padroes.md` (§37)
   **nunca vazamento cross-tenant**.
 - `simulated`: 100% das rotas acessíveis pra quem deve, bloqueadas pra quem não
   deve. Rota fantasma/morta quebra o run.
-- **Q.A. é plan-first (§22.9):** toda submissão de Q.A. planeja tudo, gera um MD
-  de passo a passo e pede aprovação ANTES de executar. Aprovado, roda faseado/
-  assistido ou de uma vez (multiagentes + cron que retoma até concluir; passo
-  destrutivo só com gate; sem retry infinito). Q.A. nunca roda às cegas.
+- **Q.A. vive na skill dedicada schematize-qa** (`/qa-plan` → `/qa-run`): planeja
+  tudo, gera o MD de passo a passo e pede aprovação ANTES de executar. Aprovado, roda
+  faseado/assistido ou de uma vez (watchdog que retoma até concluir; passo destrutivo
+  só com gate; sem retry infinito). `/zig-qa` é o wrapper no recorte Zig (`zig test`).
+  Q.A. nunca roda às cegas.
 
 ## Definition of Done
 

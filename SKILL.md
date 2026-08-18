@@ -1,7 +1,7 @@
 ---
 name: schematize-zig
 metadata:
-  version: 0.1.0
+  version: 0.1.1
 description: Padrões normativos de engenharia da casa com Zig — baixo nível, performance máxima, controle explícito de memória (allocators, sem GC), comptime, error unions, interop com C e artefatos estáticos pequenos. Use SEMPRE que for projetar, gerar, revisar ou refatorar qualquer serviço, CLI, componente de sistema, parser, driver, tooling ou biblioteca em Zig — mesmo que o usuário não cite "padrão" explicitamente. Aplique também ao decidir arquitetura, escolher stack (rol sancionado + fit), modelar eventos/banco, desenhar auth/identidade, escrever testes/pentest, configurar observabilidade, ou produzir ADR/runbook/archive. Contém pisos inegociáveis de segurança (segredo nunca no cliente, sem SQL concatenado, auth server-side, IAM por desenho — auth como app separada, ID≠email, ≥2 fatores, ReBAC multi-tenant, archive obrigatório) e de memória/código (teste com allocator que detecta leak, todo alloc com free casado, ReleaseSafe salvo perfil, ≤750 linhas/arquivo, uma função por arquivo, doc-comment `///`, MAPA da aplicação) que vetam atalhos inseguros. Frontend delega ao schematize-web; auth/cripto sensível costuma encaixar melhor em Rust (fit).
 ---
 
@@ -9,7 +9,7 @@ description: Padrões normativos de engenharia da casa com Zig — baixo nível,
 
 Conjunto normativo que rege como software de sistema é projetado, construído, testado e operado aqui **com Zig como linguagem**. Mesma base normativa das demais skills da casa; o que muda é o idioma, o build (`zig build`), o gerenciamento de memória (manual, por **allocators**, sem GC), o modelo de erro (**error unions** `!T`), a interop com C e o ecossistema.
 
-**Versão:** skill `schematize-zig` v0.1.0. Changelog em `CHANGELOG.md`.
+**Versão:** skill `schematize-zig` v0.1.1. Changelog em `CHANGELOG.md`.
 
 ## Zig no rol sancionado (fit, não gosto)
 
@@ -28,7 +28,7 @@ Digite `/zig-help` pra ver todos. Em resumo:
 | `/zig-help` | lista todos os comandos do schematize-zig |
 | `/zig-cc` | context compact: gera context.md + checklist.md no archive e roda `/compact` |
 | `/zig-handoff` | gera o handoff (context.md + checklist.md) **sem** compactar — pra fim de sessão |
-| `/zig-qa` | fluxo de Q.A. plan-first (§22.9): planeja, gera MD, pede aprovação, roda |
+| `/zig-qa` | Q.A. no contexto Zig — wrapper fino da **schematize-qa** (`/qa-plan` → `/qa-run`) com `zig test`/`zig build test` |
 | `/zig-review` | roda o gate da DoD no diff (arquivo >750 bloqueia / >300 úteis flag, função sem doc `///`, MAPA, índice, macaquices) |
 | `/zig-iam` | força/audita/scaffolda o IAM da casa (auth como app separada, ID≠email, ≥2 fatores, ReBAC multi-tenant, sessão longa/logout irreversível) ou migra um auth legado |
 | `/zig-index` | (re)gera o índice de microfunções a partir dos doc-comments `///` |

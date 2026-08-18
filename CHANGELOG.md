@@ -2,6 +2,11 @@
 
 Formato: [Keep a Changelog]; versionamento: SemVer.
 
+## [0.1.1] — 2026-08-18
+Q.A. repointado para a skill dedicada **schematize-qa**.
+### Mudado
+- **`/zig-qa` virou wrapper fino** da **schematize-qa** (`/qa-plan` → `/qa-run`) no recorte Zig (`zig test`). Referências ao antigo **§22.9** removidas de `SKILL.md`, `references/testes-execucao.md`, `assets/CLAUDE.md` e `/zig-help`.
+
 ## [0.1.0] — 2026-08-15
 Primeira release da **schematize-zig** — especialização Zig dos padrões normativos de engenharia da casa (status: **beta**).
 

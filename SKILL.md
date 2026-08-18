@@ -1,7 +1,7 @@
 ---
 name: schematize-zig
 metadata:
-  version: 0.1.1
+  version: 0.1.2
 description: Padrões normativos de engenharia da casa com Zig — baixo nível, performance máxima, controle explícito de memória (allocators, sem GC), comptime, error unions, interop com C e artefatos estáticos pequenos. Use SEMPRE que for projetar, gerar, revisar ou refatorar qualquer serviço, CLI, componente de sistema, parser, driver, tooling ou biblioteca em Zig — mesmo que o usuário não cite "padrão" explicitamente. Aplique também ao decidir arquitetura, escolher stack (rol sancionado + fit), modelar eventos/banco, desenhar auth/identidade, escrever testes/pentest, configurar observabilidade, ou produzir ADR/runbook/archive. Contém pisos inegociáveis de segurança (segredo nunca no cliente, sem SQL concatenado, auth server-side, IAM por desenho — auth como app separada, ID≠email, ≥2 fatores, ReBAC multi-tenant, archive obrigatório) e de memória/código (teste com allocator que detecta leak, todo alloc com free casado, ReleaseSafe salvo perfil, ≤750 linhas/arquivo, uma função por arquivo, doc-comment `///`, MAPA da aplicação) que vetam atalhos inseguros. Frontend delega ao schematize-web; auth/cripto sensível costuma encaixar melhor em Rust (fit).
 ---
 
@@ -9,7 +9,7 @@ description: Padrões normativos de engenharia da casa com Zig — baixo nível,
 
 Conjunto normativo que rege como software de sistema é projetado, construído, testado e operado aqui **com Zig como linguagem**. Mesma base normativa das demais skills da casa; o que muda é o idioma, o build (`zig build`), o gerenciamento de memória (manual, por **allocators**, sem GC), o modelo de erro (**error unions** `!T`), a interop com C e o ecossistema.
 
-**Versão:** skill `schematize-zig` v0.1.1. Changelog em `CHANGELOG.md`.
+**Versão:** skill `schematize-zig` v0.1.2. Changelog em `CHANGELOG.md`.
 
 ## Zig no rol sancionado (fit, não gosto)
 

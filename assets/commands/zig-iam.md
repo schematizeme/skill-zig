@@ -34,7 +34,7 @@ Confirme/scaffolde que o auth é **aplicação SEPARADA** (`references/iam.md` �
   telefone; providers **plugáveis** (interfaces via vtable/tagged union: `EmailProvider`/`SmsProvider`/
   `PushProvider`, adaptadores na borda).
 - **Senha por padrão** (**argon2id** via `std.crypto` ou lib C revisada, CPU-bound fora do loop de I/O, + HIBP), **opcional no seletor**.
-- **2º fator forte obrigatório** antes do acesso pleno (bootstrap por email não basta — o
+- **Senha + Email OTP JÁ é o 2FA baseline** (acesso pleno desde o cadastro). Fator forte (passkey/TOTP) é **nudge + step-up just-in-time** (op sensível / risco), **NUNCA muro pré-login** — barrar o acesso por falta de fator forte é o círculo infinito / bug de bootstrap **VETADO** pela norma (`iam.md` §3/§4).
   middleware barra o token de bootstrap fora do enrolamento).
 - Invariante de troca: **mutar fator X exige fator Y≠X no maior AAL**; notificar canais;
   remover último fator forte = **atraso cancelável** (job agendado). Recuperação **≥ login**.
@@ -64,7 +64,7 @@ alg=none/kid, logout que não invalidou)** — gate que trava em vazamento. Ver 
 
 ## 7. Migração de legado (modo `migrate`, prioridade 0)
 Strangler-fig: dual-run, **re-hash preguiçoso** (→argon2id) no login, mapeia registros →
-modelo novo (dedupe emails, cunha IDs ULID/UUIDv7), **força 2º fator no 1º login**, **revoga
+modelo novo (dedupe emails, cunha IDs ULID/UUIDv7), **no 1º login pós-migração: nudge + step-up (nunca barra o acesso por falta de fator forte)**, **revoga
 sessões legadas**, **re-deriva authz** em tuplas ReBAC (nunca confia na antiga). O auth
 migrado nasce app separada (`_zig`/`_rs`/`_go` por ADR de fit). (Legado Node casa com `schematize-node`.)
 

@@ -1,5 +1,11 @@
 # Changelog — schematize-zig
 
+## [0.1.2] — 2026-08-18
+Correção da contradição do muro pré-login de IAM (alinha ao `iam.md` da schematize-engineering).
+### Mudado
+- **/zig-iam**: removido o "2º fator forte obrigatório antes do acesso pleno" e o "força 2º fator no 1º login" — o muro pré-login / deadlock de bootstrap VETADO pela norma. Agora senha+Email OTP = 2FA baseline; fator forte é nudge + step-up just-in-time.
+
+
 Formato: [Keep a Changelog]; versionamento: SemVer.
 
 ## [0.1.1] — 2026-08-18

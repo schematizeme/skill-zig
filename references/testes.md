@@ -15,6 +15,7 @@
 **Obrigatório**
 - Testes em **dois eixos**: por código (unit/integration, dentro de cada serviço, via `zig test` / `zig build test`) e por sistema vivo (smoke/security/pentest/authz/hardening/chaos/simulated, no repo `<project>_ops`).
 - Caminhos críticos (auth, pagamento, autorização, billing, eventos de domínio, multi-tenancy) têm testes explícitos cobrindo sucesso, **caminho de erro** (`!T`) e edge cases — independentemente da cobertura agregada.
+- **Teste NUNCA dispara efeito externo de verdade** (e-mail, SMS, push, webhook, cobrança): o provider default no `zig test` é o **SINK**, o destinatário sintético é `<papel>+<run-id>-<n>@test.<domain>` e existe o **teste vermelho do guard** — `try std.testing.expectError(SendError.ExternalRecipientBlocked, mail.sendOtp("alguem@gmail.com", code))` — mais o teste do **cap por execução**. Código pronto em `references/iam.md` §3.1; normativa em `schematize-engineering` → `references/efeitos-externos.md`. **VETADO** `@gmail.com`/domínio de terceiro/e-mail de pessoa real em qualquer fixture, seed ou `simulated` (grep no CI trava).
 
 **Cobertura mínima (por código)**
 

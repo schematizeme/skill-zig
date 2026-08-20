@@ -98,6 +98,9 @@ segurança: operação sensível exige fator forte; email/SMS servem de fallback
   existir, ou **lib C revisada via `@cImport`** com o **boundary validado**
   (`references/seguranca.md §Z.4`); se o custo pesar, é sinal para reavaliar o fit (§0).
 - **Email OTP (Resend) ligado por padrão, inclusive em HML** — só o operador desliga.
+  **Ligado ≠ entregando pra fora:** em `prd` o provider é o real; **fora de `prd` o default é
+  o SINK** e o guard recusa destinatário fora do domínio de teste (§3.1) — o fluxo de OTP é
+  exercido ponta-a-ponta lendo o código do sink, nunca de uma caixa real.
 - **Twilio por padrão** para verificação de telefone e 2FA por SMS/voz.
 - **Provedores plugáveis como interfaces Zig:** o core depende de uma **abstração**, não do
   SDK concreto. Em Zig, modele o provider como **interface via vtable** (struct com ponteiros
@@ -136,6 +139,257 @@ segurança: operação sensível exige fator forte; email/SMS servem de fallback
   sensível** e dispara **step-up** ali) e **escalados sob risco** (§9). Enrolar um fator forte
   usa o Email OTP como verificação (Y≠X, §4): sem deadlock. A ausência de fator forte **degrada
   o que é sensível** (`403 step_up_required`), não **bloqueia o baseline**.
+
+### 3.1 Efeito externo fora de `prd` — SINK por default e guard DENTRO do provider
+
+O OTP é o fluxo que **mais amplifica envio**: um seed de 5.000 contas dispara 5.000 e-mails. Por
+isso **ligado ≠ entregando pra fora**. Em `prd` o `EmailProvider` é o real (sem chave, o serviço
+**recusa subir** — não cai no logger silencioso); em **qualquer outro ambiente** o default é o
+**SINK** (Mailpit/log, lido pelo teste) e o **guard mora DENTRO do provider** — chamador esquece,
+provider não. O porquê (bounce/complaint em massa queima IP e domínio e **derruba o OTP de
+produção**, com semanas de warm-up e utilidade zero) e as 4 camadas estão na normativa:
+`schematize-engineering` → `references/efeitos-externos.md`. Aqui vai só o **recorte Zig**.
+
+Como a interface já é **vtable** (§3), o guard é **outro `EmailProvider`** que envelopa o de
+dentro — composição, sem herança e sem `comptime` mágico. A recusa é **error union**
+(`error{ExternalRecipientBlocked}`), tratada com `try`/`expectError`: **VETADO** `catch {}`,
+`catch unreachable` ou `_ = send(...)` em cima dela (piso "erro nunca engolido").
+
+```zig
+//! src/notify/email.zig — provider, sink e guard moram JUNTOS: nenhum chamador
+//! escolhe para onde o e-mail vai. A escolha é da composição (`wire`), por ambiente.
+const std = @import("std");
+
+/// Erros de envio. `ExternalRecipientBlocked` é erro de PROGRAMAÇÃO (aparece no
+/// teste e no CI, com mensagem acionável), não erro do usuário.
+pub const SendError = error{
+    ExternalRecipientBlocked,
+    RunCapExceeded,
+    AddressTooLong,
+};
+
+/// Ambiente. Fail-closed: só a string exata "prd" liga o envio real; ausente,
+/// vazia ou desconhecida vira `.dev` — o modo SEGURO.
+pub const Env = enum {
+    dev,
+    hml,
+    prd,
+
+    pub fn parse(raw: ?[]const u8) Env {
+        const s = raw orelse return .dev;
+        if (std.mem.eql(u8, s, "prd")) return .prd;
+        if (std.mem.eql(u8, s, "hml")) return .hml;
+        return .dev;
+    }
+
+    /// Lê `APP_ENV` do processo. Variável ausente/ilegível ⇒ `.dev` (não-prd).
+    pub fn fromProcess(alloc: std.mem.Allocator) Env {
+        const raw = std.process.getEnvVarOwned(alloc, "APP_ENV") catch return .dev;
+        defer alloc.free(raw);
+        return Env.parse(raw);
+    }
+};
+
+/// Interface do provider (vtable): o core depende DISTO, nunca do SDK concreto.
+pub const EmailProvider = struct {
+    ptr: *anyopaque,
+    vtable: *const VTable,
+
+    pub const VTable = struct {
+        sendOtp: *const fn (ptr: *anyopaque, to: []const u8, code: []const u8) anyerror!void,
+    };
+
+    pub fn sendOtp(self: EmailProvider, to: []const u8, code: []const u8) anyerror!void {
+        return self.vtable.sendOtp(self.ptr, to, code);
+    }
+};
+
+/// Domínios aceitos fora de `prd`. O 1º é o `test.<domain>` da casa (null MX +
+/// SPF `-all` + DMARC `p=reject`); os demais são os TLDs reservados da
+/// RFC 2606/6761, que não resolvem em lugar nenhum do mundo.
+pub const default_test_domains: []const []const u8 = &.{
+    "test.acme.com", // TROCAR pelo test.<domain> do projeto
+    "test",
+    "invalid",
+    "example",
+    "example.com",
+};
+
+/// SINK — default fora de `prd`. Não abre socket para fora: registra o envio
+/// (ou entrega no Mailpit local) para o teste LER o código do OTP.
+pub const SinkProvider = struct {
+    sent: usize = 0,
+    last_to: [254]u8 = undefined,
+    last_to_len: usize = 0,
+
+    const vtable = EmailProvider.VTable{ .sendOtp = sendOtp };
+
+    pub fn provider(self: *SinkProvider) EmailProvider {
+        return .{ .ptr = self, .vtable = &vtable };
+    }
+
+    /// Último destinatário sinkado — o teste assere sobre isto, não sobre caixa real.
+    pub fn lastTo(self: *const SinkProvider) []const u8 {
+        return self.last_to[0..self.last_to_len];
+    }
+
+    fn sendOtp(ptr: *anyopaque, to: []const u8, code: []const u8) anyerror!void {
+        const self: *SinkProvider = @ptrCast(@alignCast(ptr));
+        if (to.len > self.last_to.len) return SendError.AddressTooLong;
+        @memcpy(self.last_to[0..to.len], to);
+        self.last_to_len = to.len;
+        self.sent += 1;
+        std.log.debug("mail sink: to={s} code={s}", .{ to, code });
+    }
+};
+
+/// GUARD — envelopa QUALQUER `EmailProvider` e é o único ponto de saída.
+/// Deny-by-default: fora de `prd`, só o domínio de teste passa; e conta.
+pub const GuardedProvider = struct {
+    inner: EmailProvider,
+    env: Env,
+    test_domains: []const []const u8 = default_test_domains,
+    /// Teto por execução (`MAIL_MAX_PER_RUN`, default 50). Só vale fora de `prd`
+    /// — produção entrega o volume real.
+    max_per_run: usize = 50,
+    sent: usize = 0,
+
+    const vtable = EmailProvider.VTable{ .sendOtp = sendOtp };
+
+    pub fn provider(self: *GuardedProvider) EmailProvider {
+        return .{ .ptr = self, .vtable = &vtable };
+    }
+
+    fn sendOtp(ptr: *anyopaque, to: []const u8, code: []const u8) anyerror!void {
+        const self: *GuardedProvider = @ptrCast(@alignCast(ptr));
+        try self.assertDeliverable(to);
+        if (self.env != .prd) {
+            if (self.sent >= self.max_per_run) {
+                std.log.err(
+                    "cap de envio estourado (max_per_run={d}, env={s}): laço de teste em massa. Abortando.",
+                    .{ self.max_per_run, @tagName(self.env) },
+                );
+                return SendError.RunCapExceeded;
+            }
+            self.sent += 1; // conta a TENTATIVA: falha do provider não zera o teto
+        }
+        try self.inner.sendOtp(to, code);
+    }
+
+    /// Deny-by-default, com mensagem que ensina o caminho certo.
+    fn assertDeliverable(self: *const GuardedProvider, to: []const u8) SendError!void {
+        if (self.env == .prd) return; // produção entrega de verdade
+        if (self.isTestRecipient(to)) return;
+        std.log.err(
+            "bloqueado: destinatario externo '{s}' com env={s}. Use " ++
+                "<papel>+<run-id>-<n>@test.<domain> ou registre o ADR de excecao " ++
+                "(allowlist <=5 + cap + janela + subdominio). Nada foi enviado.",
+            .{ to, @tagName(self.env) },
+        );
+        return SendError.ExternalRecipientBlocked;
+    }
+
+    fn isTestRecipient(self: *const GuardedProvider, to: []const u8) bool {
+        const at = std.mem.lastIndexOfScalar(u8, to, '@') orelse return false;
+        const domain = to[at + 1 ..];
+        if (domain.len == 0) return false;
+        for (self.test_domains) |allowed| {
+            if (std.ascii.eqlIgnoreCase(domain, allowed)) return true;
+            // subdomínio do domínio de teste: "mx.test.acme.com" casa com "test.acme.com"
+            if (domain.len > allowed.len + 1 and
+                domain[domain.len - allowed.len - 1] == '.' and
+                std.ascii.eqlIgnoreCase(domain[domain.len - allowed.len ..], allowed))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+};
+
+/// Composição (bootstrap/`main`): a seleção por ambiente acontece UMA vez, aqui.
+/// O guard envelopa SEMPRE — inclusive em `prd`, onde ele só conta e audita.
+/// `real` é o adaptador Resend/SES, construído só quando `env == .prd`.
+pub fn wire(
+    env: Env,
+    sink: *SinkProvider,
+    real: EmailProvider,
+    guard: *GuardedProvider,
+    max_per_run: usize,
+) EmailProvider {
+    guard.* = .{
+        .inner = if (env == .prd) real else sink.provider(),
+        .env = env,
+        .max_per_run = max_per_run,
+    };
+    return guard.provider();
+}
+
+/// `MAIL_MAX_PER_RUN` com default 50. Valor ausente/ilegível ⇒ default (fail-closed).
+pub fn capFromEnv(alloc: std.mem.Allocator) usize {
+    const raw = std.process.getEnvVarOwned(alloc, "MAIL_MAX_PER_RUN") catch return 50;
+    defer alloc.free(raw);
+    return std.fmt.parseInt(usize, raw, 10) catch 50;
+}
+
+test "guard recusa destinatário externo" {
+    var sink = SinkProvider{};
+    var guard = GuardedProvider{ .inner = sink.provider(), .env = .hml };
+    const mail = guard.provider();
+
+    // O vermelho que precisa existir: caixa real, fora do domínio de teste, em hml.
+    try std.testing.expectError(
+        SendError.ExternalRecipientBlocked,
+        mail.sendOtp("alguem@gmail.com", "123456"),
+    );
+    try std.testing.expectEqual(@as(usize, 0), sink.sent); // NADA saiu do processo
+
+    // O endereço canônico da casa passa e cai no sink.
+    try mail.sendOtp("login+run42-1@test.acme.com", "123456");
+    try std.testing.expectEqual(@as(usize, 1), sink.sent);
+    try std.testing.expectEqualStrings("login+run42-1@test.acme.com", sink.lastTo());
+}
+
+test "cap por execução aborta antes de virar 5.000" {
+    var sink = SinkProvider{};
+    var guard = GuardedProvider{ .inner = sink.provider(), .env = .dev, .max_per_run = 2 };
+    const mail = guard.provider();
+
+    try mail.sendOtp("a+run7-1@test.acme.com", "111111");
+    try mail.sendOtp("b+run7-2@test.acme.com", "222222");
+    try std.testing.expectError(
+        SendError.RunCapExceeded,
+        mail.sendOtp("c+run7-3@test.acme.com", "333333"),
+    );
+    try std.testing.expectEqual(@as(usize, 2), sink.sent);
+}
+
+test "env ausente ou desconhecido NÃO vira produção" {
+    try std.testing.expectEqual(Env.dev, Env.parse(null));
+    try std.testing.expectEqual(Env.dev, Env.parse(""));
+    try std.testing.expectEqual(Env.dev, Env.parse("production")); // só "prd" liga o real
+    try std.testing.expectEqual(Env.prd, Env.parse("prd"));
+}
+```
+
+**O que isso trava, e o que ainda é sua responsabilidade:**
+
+| Regra | Onde está no código |
+|---|---|
+| Guard **dentro** do provider, não no chamador | `GuardedProvider.sendOtp` → `assertDeliverable` antes de qualquer I/O |
+| Sink default fora de `prd`, escolha **uma vez** | `wire()` na composição; nenhum use-site instancia o adaptador real |
+| Fail-closed | `Env.parse`/`Env.fromProcess`: ausente/ilegível ⇒ `.dev`; `capFromEnv` volta ao default |
+| Cap por execução + abort | `max_per_run` + `SendError.RunCapExceeded` (conta a tentativa, não o sucesso) |
+| Recusa é **erro**, não warning | error union `SendError`; **VETADO** `catch {}`/`catch unreachable` no call-site |
+| Destinatário sintético em rota nula | `default_test_domains` (o `test.<domain>` + TLDs RFC 2606/6761) |
+
+- **Fixture/seed/`simulated`:** todo endereço gerado é `<papel>+<run-id>-<n>@test.<domain>`.
+  **VETADO** `@gmail.com`/`@hotmail.com`, domínio de terceiro, e-mail de pessoa real (inclusive o
+  seu) e o domínio de produção — em qualquer `.zig` de teste, seed ou script.
+- **`SmsProvider` (Twilio) e `PushProvider` seguem o MESMO desenho** — mesma vtable, mesmo guard,
+  mesmo cap (SMS custa por unidade: o cap importa mais, não menos).
+- **Chave de não-prd é sandbox**, nunca a de produção; egress SMTP (25/465/587) bloqueado em
+  dev/hml (`references/ops.md`, `schematize-infra`).
 
 ## 4. Fluxos
 
@@ -303,6 +557,7 @@ difícil de tomar sem chatear o legítimo:
 - [ ] Auth é **app separada** (`<projeto>_auth_zig` — ou `_rs`/`_go` por ADR — + front próprio em `auth.<domain>`, isolados) — não monolith.
 - [ ] **ID interno imutável** (ULID/UUIDv7); email/telefone não são ID; múltiplos emails suportados.
 - [ ] **2FA baseline por desenho** (senha + Email OTP = 2FA desde o cadastro); fator forte é **nudge + just-in-time (step-up)**, **NUNCA muro pré-login** (o PEP libera o baseline, exige AAL alto só por rota sensível); passkey no núcleo; email OTP always-on; Twilio; providers como interfaces/vtables Zig.
+- [ ] **Efeito externo só sai em `prd` (§3.1):** `EmailProvider`/`SmsProvider`/`PushProvider` com **default = SINK** fora de prd (escolha na composição, não no chamador), **guard DENTRO do provider** devolvendo `error{ExternalRecipientBlocked}` (sem `catch {}`/`catch unreachable` no call-site), **cap por execução** (`MAIL_MAX_PER_RUN`, default 50) que aborta, **fail-closed** (`APP_ENV` ausente ⇒ não-prd) e chave **sandbox** em não-prd. Prova: `test "guard recusa destinatário externo"` com `std.testing.expectError` (vermelho visto) + `dig MX test.<domain>` = null MX. (`schematize-engineering` → `references/efeitos-externos.md`)
 - [ ] **Risk engine adaptativo:** log de sessões/tentativas + score (IP/device/geo/velocity/honeypot); **2FA→3FA** sob risco; **negação deceptiva/tarpit** (falso negativo, resposta idêntica ao erro real em tempo constante, "próxima passa" curta/escopada); notifica login suspeito.
 - [ ] Invariante de troca de fator (Y≠X, maior AAL); recuperação ≥ login; SSO com recuperação local; senha em **argon2id** (`std.crypto`/C revisada) + HIBP, CPU-bound fora do event loop.
 - [ ] **Multi-tenant + RBAC/ABAC** (ReBAC OpenFGA/SpiceDB), deny-default, PDP=Check API / PEP=middleware Zig, enforcement server-side, token fino.

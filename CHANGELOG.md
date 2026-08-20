@@ -1,5 +1,15 @@
 # Changelog — schematize-zig
 
+## [0.2.0] — 2026-08-20
+Piso novo: **efeito externo NUNCA sai de não-produção** — recorte Zig (vtable + error union) da normativa `schematize-engineering` → `references/efeitos-externos.md`.
+### Adicionado
+- **SKILL.md**: piso inegociável "efeito externo NUNCA sai de não-produção" — sink default fora de `prd`, guard como provider que envelopa o de dentro devolvendo `error{ExternalRecipientBlocked}` (sem `catch {}`/`catch unreachable`), seleção por ambiente na composição, cap por execução, fail-closed, domínio de teste em rota nula.
+- **references/iam.md §3.1** (novo): código Zig completo e compilável — `EmailProvider` como vtable, `SinkProvider` (default fora de prd, lido pelo teste), `GuardedProvider` com `assertDeliverable` deny-by-default + `isTestRecipient` (match por domínio, não por substring), `Env.parse`/`Env.fromProcess` **fail-closed** (só `"prd"` liga o real), `capFromEnv` (`MAIL_MAX_PER_RUN`, default 50), `wire()` de composição por ambiente, e os testes `test "guard recusa destinatário externo"` / `test "cap por execução aborta antes de virar 5.000"` / `test "env ausente ou desconhecido NÃO vira produção"` com `std.testing.expectError`. Tabela regra→código e extensão a `SmsProvider`/`PushProvider`.
+- **references/iam.md**: bullet do Email OTP agora explicita "ligado ≠ entregando pra fora" (sink + guard); item novo no checklist de DoD do IAM com a prova exigida (`expectError` vermelho + `dig MX` null MX).
+- **references/testes.md §22**: item obrigatório — teste nunca dispara efeito externo real (sink no `zig test`, endereço `<papel>+<run-id>-<n>@test.<domain>`, teste vermelho do guard e do cap, grep de CI contra `@gmail.com`/terceiros em fixture/seed/`simulated`).
+- **assets/CLAUDE.md**: piso 17 com o recorte Zig (vtable/sink/guard/error union/cap/fail-closed/rota nula) e o motivo (queima de IP e domínio derruba o OTP de produção).
+
+
 ## [0.1.2] — 2026-08-18
 Correção da contradição do muro pré-login de IAM (alinha ao `iam.md` da schematize-engineering).
 ### Mudado

@@ -1,6 +1,6 @@
 # Gestão de Contexto no Claude Code (handoff em sessões longas)
 
-> Parte da skill **schematize-zig**. Implementa a §34.1 (handoff de contexto) e a §28 (archive). Conteúdo específico de ferramenta (Claude Code / VS Code) — o princípio normativo está em `references/entrega.md` (§34.1).
+> Parte da skill **schematize-zig**. **É o DONO do handoff de contexto**: o §34.1 do `entrega.md` **da base** (`schematize-engineering`) é o *gatilho* (quando parar e arquivar); o *como* — formato dos dois MDs, hooks, `/compact`, o que entra em cada seção — é aqui, e só aqui. Implementa também a §28 (archive). Conteúdo específico de ferramenta (Claude Code / VS Code) — o princípio normativo está no `entrega.md` **da base** (`schematize-engineering` -> `references/entrega.md` §34.1) — o recorte local deixou de repeti-lo quando virou ponteiro.
 
 ## Por que
 

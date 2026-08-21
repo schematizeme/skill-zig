@@ -1,6 +1,6 @@
 # Task — <task-name>
 
-> Archive obrigatório de implementação (§28.2). Atualize ao FIM de cada sessão.
+> Archive obrigatório de implementação (`schematize-archive` -> `references/archive.md` (plan/ e task)). Atualize ao FIM de cada sessão.
 > Caminho: <project>_archive/task/<task-name>.md
 
 ## Contexto

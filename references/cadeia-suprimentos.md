@@ -28,6 +28,27 @@ declarada com **URL do artefato + `hash` criptográfico**. **O hash é o lockfil
 fato** — o build **falha** se o conteúdo baixado não bater com o hash fixado. Não
 existe "lockfile separado" a manter: o pin vive no `.zon`, versionado no git.
 
+A forma do arquivo (✔ verificada rodando `zig build` no **0.16.0**):
+
+```zig
+.{
+    .name = .meu_servico,               // ENUM LITERAL, não string: `.name = "x"` → `error: expected enum literal`
+    .version = "0.1.0",
+    .minimum_zig_version = "0.16.0",
+    .fingerprint = 0x6d1f6ea5227b8027,  // OBRIGATÓRIO; sem ele: `error: missing top-level 'fingerprint' field`
+    .dependencies = .{
+        // .alguma_lib = .{ .url = "https://…/x.tar.gz", .hash = "…" },
+    },
+    .paths = .{ "build.zig", "build.zig.zon", "src" },
+}
+```
+
+**Sobre o `fingerprint`:** ele identifica o **pacote** (não a versão) e o compilador **gera o valor
+para você** — a mensagem de erro traz o número sugerido, e é esse que se cola. Ele existe para que
+renomear o pacote ou publicá-lo noutra URL não o transforme, aos olhos do resolvedor, num pacote
+diferente. **Copiar o `fingerprint` de outro projeto ao usar um `.zon` como molde é o erro a
+evitar** — dois pacotes com a mesma digital; num fork, gere um novo.
+
 **MUST**
 - **Toda dependência com `hash` fixado** no `build.zig.zon`, commitado. O build é
   reprodutível a partir dele — mesmo hash, mesmo bytes, sempre.
@@ -71,7 +92,7 @@ compilador é contrato de build** — tão parte da cadeia quanto o `build.zig.z
   fluxo em **`references/stack-versoes.md` §3**.
 - **Uma fonte da verdade da versão** (`.zig-version` ou variável no ops) consumida
   por dev, CI e deploy — ninguém escolhe a sua.
-- **Releases marcadas** (`0.14.0`, `0.15.1`, …) no artefato que vai pra hml/prd;
+- **Releases marcadas** (a versão exata vive em `references/stack-versoes.md`, com data de verificação — nunca cravada aqui) no artefato que vai pra hml/prd;
   nightly/`master` só em spike de exploração.
 
 **VETADO**

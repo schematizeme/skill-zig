@@ -6,6 +6,9 @@
 # declarado e desarmado e pior que gate ausente: da a garantia sem entregar.
 # Entrada: $1 = diretorio de origem (default $INDEX_SRC) - $2 = indice commitado (default $INDEX_FILE).
 # Saida: exit 0 indice em dia - exit 1 indice defasado, ausente ou parametro faltando.
+# EXCEÇÃO DECLARADA de strict mode (`schematize-shell` -> `references/piso.md` secao 1):
+# este script é um COLETOR — ele varre tudo e SOMA os achados. Com `set -e` abortaria no
+# primeiro problema e reportaria um, escondendo os outros. Por isso `set -uo pipefail` sem `-e`.
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SRC="${1:-${INDEX_SRC:-}}"

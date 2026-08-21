@@ -89,7 +89,9 @@ Zig **ainda não chegou ao 1.0**. Consequências que viram piso:
 - **Build:** `zig build` com **`build.zig`** (o build é código Zig, versionado). Steps
   nomeados idiomáticos: `zig build`, `zig build run`, `zig build test`, `zig build check`.
 - **Dependências:** **`build.zig.zon`** — cada dep com **URL + `hash` criptográfico**
-  (o hash é o lockfile; build falha se o conteúdo não bater). Detalhe e piso em
+  (o hash é o lockfile; build falha se o conteúdo não bater), mais os dois campos que o **0.16**
+  exige no topo e que quebram `.zon` antigo: **`.name` como enum literal** (`.name = .meu_servico`)
+  e **`.fingerprint`** (o compilador sugere o valor no próprio erro). Detalhe e piso em
   `references/cadeia-suprimentos.md`.
 - **Formatação:** `zig fmt` é a formatação canônica; **`zig fmt --check` trava o CI**.
 - **Erros:** error unions `!T` sempre tratados (`try`, `catch |err|`, `errdefer`);

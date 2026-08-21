@@ -3,9 +3,12 @@
 # do commit. Os handoffs/checklists/planos são gerados automaticamente e podem
 # capturar segredo sem querer; isto protege contra violar §16.1/§32.
 #
-# Uso (pre-commit): bash scripts/archive-secret-scan.sh [dir]   (default: <projeto>_archive)
+# Uso (pre-commit): bash scripts/archive-secret-scan.sh [dir]   (default: o diretorio atual)
+# O alvo e o `<projeto>/<projeto>_archive/` — a convencao `<projeto>/_archive` foi REVOGADA
+# na v0.19.0; a planta canonica esta na schematize-archive (references/archive.md, ADR-0005).
 # Sai 1 se achar candidato a segredo/PII. Usa gitleaks se disponível; senão regex.
 
+# strict-ok: coletor — varre tudo e soma os achados; `grep` sem match sai 1 e é resultado normal aqui, não erro (`schematize-shell` -> `references/piso.md` secao 1)
 set -uo pipefail
 DIR="${1:-${PROJECT_ARCHIVE_ROOT:-.}}"
 RED=$'\033[0;31m'; GRN=$'\033[0;32m'; RST=$'\033[0m'

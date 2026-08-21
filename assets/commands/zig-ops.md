@@ -12,14 +12,14 @@ Confirme que o pipeline força **dev local → teste local → GitHub → hml �
 - **VETADO editar código direto no servidor.** Achou edição manual → trate como incidente (archive), não como fluxo.
 
 ## 1.5. Layout, seed e redeploy destrutivo
-Verifique/scaffolde (`references/ops.md` §2):
+Verifique/scaffolde (`schematize-engineering` -> `references/ops.md` §2):
 - O ops provisiona em **`/<app>/`** e **clona os repos dentro** (`/<app>/<app>_<ctx>`, ex. `/payle/payle_core`). Repo fora de `/<app>/` é achado.
 - **`/<app>/.env` é o seeder global** — fonte única de config; nenhum serviço com config à parte fora do seed.
 - **Redeploy é destrutivo na app:** `ops redeploy` apaga a implantação anterior e recria um clone **zerado** só com o seed (sem patch in-place, sem drift). Prove idempotência: dois redeploys seguidos → mesmo estado.
 - **Dados NUNCA no destrutivo:** banco/volumes/uploads preservados (migration reversível). Apagar dado é `ops reset`, **gated a dev/hml**, com confirmação — nunca prd.
 
 ## 1.6. Isolamento por usuário
-Verifique/scaffolde (`references/ops.md` §3):
+Verifique/scaffolde (`schematize-engineering` -> `references/ops.md` §3):
 - **Um user Linux dedicado por serviço** (`payle_core`→user `payle_core`), nunca dois no mesmo user, nunca `root`; a pasta do repo pertence ao user.
 - **Um systemd unit hardened por serviço** (`User=`, `NoNewPrivileges`, `ProtectSystem=strict`, `ProtectHome`, `PrivateTmp`, `ReadWritePaths` mínimo). Comprometer um serviço não alcança os outros nem o host.
 - **Tudo criado pelo ops** (user, permissão, unit) — nunca à mão.

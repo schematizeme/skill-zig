@@ -1,7 +1,7 @@
 ---
 name: schematize-zig
 metadata:
-  version: 0.2.0
+  version: 0.3.0
 description: Padrões normativos de engenharia da casa no recorte Zig — baixo nível, interop C, controle de memória explícito — cobrindo arquitetura, alocadores e detecção de leak, concorrência, segurança, IAM, testes/pentest, dados, observabilidade, build/deploy e archive. Use SEMPRE que for projetar, gerar, revisar ou refatorar serviço, biblioteca, binding C, parser, build.zig, teste ou deploy em Zig — mesmo sem citar "padrão" —, e ao escolher stack (Zig entra por fit + ADR no rol Go/Rust/Elixir/C#/Zig/Ruby), desenhar auth, configurar observabilidade ou produzir ADR/runbook/archive. Pisos: segredo nunca no cliente; erro nunca engolido (`catch {}`/`catch unreachable` vetados); todo alocador testado contra leak com `std.testing.allocator`; auth server-side; IAM como app separada; efeito externo NUNCA sai de não-produção — sink por default, guard deny-by-default, cap por execução (atômico, válido também em prd), domínio de teste em rota nula; archive obrigatório. Pentest na schematize-pentest.
 ---
 
@@ -9,7 +9,7 @@ description: Padrões normativos de engenharia da casa no recorte Zig — baixo 
 
 Conjunto normativo que rege como software de sistema é projetado, construído, testado e operado aqui **com Zig como linguagem**. Mesma base normativa das demais skills da casa; o que muda é o idioma, o build (`zig build`), o gerenciamento de memória (manual, por **allocators**, sem GC), o modelo de erro (**error unions** `!T`), a interop com C e o ecossistema.
 
-**Versão:** skill `schematize-zig` v0.2.0. Changelog em `CHANGELOG.md`.
+**Versão:** skill `schematize-zig` v0.3.0. Changelog em `CHANGELOG.md`.
 
 ## Zig no rol sancionado (fit, não gosto)
 
@@ -99,9 +99,9 @@ Nunca violados, nem "pra funcionar", nem "pra ir mais rápido". Lista completa e
 - **Segredo nunca no cliente.** Nada de API key, secret de JWT, senha de banco ou token em bundle do browser nem em `NEXT_PUBLIC_*`/`VITE_*`. Nada de segredo embutido no binário (`@embedFile` de config sensível) ou na fonte. Segredo só server-side. Detalhe em `references/seguranca.md`.
 - **SQL sempre parametrizado.** Zig não tem `format!`, mas montar query com `std.fmt.allocPrint`/concatenação é o mesmo pecado — injeção esperando acontecer. Use driver com binds parametrizados (ou `libpq`/`PQexecParams` via `@cImport`).
 - **Auth e autorização server-side.** `tenant_id`/role/`user_id` vêm do token verificado, nunca do body/header do cliente.
-- **JWT validado por inteiro** (assinatura, exp, aud, iss, alg em allowlist). Senha em argon2id (ou bcrypt cost ≥ 12). Token de sessão por CSPRNG (`std.crypto.random`), nunca PRNG previsível.
+- **JWT validado por inteiro** (assinatura, exp, aud, iss, alg em allowlist). Senha em argon2id (ou bcrypt cost ≥ 12). Token de sessão por CSPRNG (**`io.random`** / `io.randomSecure` — ✔ 0.16.0), nunca PRNG previsível.
 - **Erro nunca engolido.** Sem `_ = foo()` descartando um error union, sem `catch unreachable`/`catch @panic(...)`/`catch {}` em caminho de produção pra calar o compilador; trate `!T`/`?T` de verdade (`try`, `catch |err| {...}`, `errdefer`, `orelse`).
-- **Memória sem vazamento (piso Zig).** Todo `alloc` tem **caminho de `free` casado** (`defer alloc.free(...)` / `errdefer` no erro); **todo teste roda com o allocator que detecta leak** (`std.testing.allocator`; `GeneralPurposeAllocator` com `.deinit()` que reporta em debug). Vazar memória é bug de entrega, não detalhe. Detalhe em `references/memoria-concorrencia.md`.
+- **Memória sem vazamento (piso Zig).** Todo `alloc` tem **caminho de `free` casado** (`defer alloc.free(...)` / `errdefer` no erro); **todo teste roda com o allocator que detecta leak** (`std.testing.allocator`; `std.heap.DebugAllocator` com `.deinit()` que reporta em debug). Vazar memória é bug de entrega, não detalhe. Detalhe em `references/memoria-concorrencia.md`.
 - **Build mode seguro.** Produção exposta a input hostil roda em **`ReleaseSafe`** (bounds check + trap de overflow) salvo perfil que justifique `ReleaseFast`/`ReleaseSmall` em ADR — sem as checagens, use-after-free/OOB viram UB explorável. Detalhe em `references/seguranca.md`.
 - **Teste nunca silenciado** pra passar CI (comentar assert, remover o bloco `test`, baixar threshold). Conserta o código, não o teste.
 - **Sem monólito que mistura bounded contexts**, sem monólito distribuído, sem shared lib `commons` de domínio.
@@ -112,7 +112,7 @@ Nunca violados, nem "pra funcionar", nem "pra ir mais rápido". Lista completa e
 - **Pisos de código (`references/padroes-codigo.md`):** arquivos **≤ 750 linhas** (~500 úteis + ~250 comentário; acima → quebrar por coesão), **flag em > 300 úteis** (~400 em observabilidade), **uma função/unidade lógica por arquivo**, **toda função com doc-comment `///`** (motivo, comportamento, entradas — incluindo o `Allocator` e quem é dono da memória —, saídas/erros do `!T`, efeitos), **`zig fmt --check`** no CI, **`MAPA.md`** em `<projeto>_archive/index/` (nunca no root) e **índice de microfunções** regenerado (`/zig-index`). Todo MD gerado mora no archive (§28).
 - **Linguagem: Zig por fit, com ADR.** Backend novo sai do **rol sancionado** (Go/Rust/Elixir/C#/Zig/Ruby) por encaixe (§27); **novo backend fora do rol sem ADR é VETADO**; Node backend e PHP são legado/saída (migram por funcionalidade do módulo). Detalhe em `references/arquitetura.md` (§3) e `references/stack-versoes.md`.
 - **Fluxo de ambientes e ops (`references/ops.md`).** Toda mudança segue **dev local → teste local → GitHub → hml → prd**; **VETADO editar código direto no servidor**. **100%** das operações no servidor passam pela **ferramenta do `<projeto>_ops`**; o ops é **autônomo**. **Instalação sempre paralela** = `nproc`; **falha no paralelo = serviços não independentes → corrigir a independência é prioridade máxima** (nunca serializar pra mascarar).
-- **Deploy destrutivo por seed + isolamento por usuário (`references/ops.md` §2–§3).** Redeploy destrutivo na aplicação (clone zerado do seed), **preservando dados**; `/<app>/.env` é o seeder global; cada serviço como user Linux próprio em systemd unit hardened (binário estático Zig facilita distroless/scratch).
+- **Deploy destrutivo por seed + isolamento por usuário (`schematize-engineering` -> `references/ops.md` §2–§3).** Redeploy destrutivo na aplicação (clone zerado do seed), **preservando dados**; `/<app>/.env` é o seeder global; cada serviço como user Linux próprio em systemd unit hardened (binário estático Zig facilita distroless/scratch).
 - **IAM por desenho (`references/iam.md`).** Auth é **app SEPARADA** (`<projeto>_auth_zig` + front em `auth.<domain>`), delega por **OIDC/OAuth2.1 + PKCE**, valida por JWKS público. **ID interno imutável (ULID/UUIDv7) — email/telefone nunca é ID.** **≥2 fatores baseline** (senha + Email OTP Resend always-on; passkey/WebAuthn no núcleo; TOTP/push; Twilio) — o PEP **não barra o login baseline**, exige AAL alto **só por rota sensível** (step-up just-in-time). **Multi-tenant ReBAC deny-default** (OpenFGA/SpiceDB). Sessão 7d/90d; **logout irreversível**. **Posicionamento honesto:** o serviço de auth costuma encaixar melhor em Rust/Go (fit) — se for Zig, registre o ADR e cumpra o piso igual. **Migrar auth legado = prioridade 0.** Scaffold/auditoria por `/zig-iam`.
 
 > Regra de bolso: se a justificativa começa com "só pra funcionar", "depois eu arrumo" ou "é mais rápido assim" e o resultado mexe em segredo, auth, memória, dado ou registro — é anti-padrão vetado. Pare e faça certo.

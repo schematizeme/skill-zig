@@ -6,6 +6,7 @@
 # Skeleton obrigatório (ver a `schematize-qa` (padrao de script, `references/execucao.md` secao 3)). Copie para tests/<mode>/<name>.sh e preencha.
 # Cada script é executável standalone e sai 0 (tudo passou) ou 1 (qualquer falha).
 
+# strict-ok: harness de teste — roda TODOS os casos e soma; com `-e` pararia no primeiro vermelho e esconderia o resto (`schematize-shell` -> `references/piso.md` secao 1)
 set -uo pipefail
 _DIR="$(cd -P "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=../lib.sh

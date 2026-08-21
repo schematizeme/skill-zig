@@ -21,6 +21,9 @@
 # O que ele NÃO faz: julgar semântica do provider (isso é revisão). Aqui é o que
 # regex e DNS provam sozinhos — o suficiente pra travar o acidente das 5.000 mensagens.
 
+# EXCEÇÃO DECLARADA de strict mode (`schematize-shell` -> `references/piso.md` secao 1):
+# este script é um COLETOR — ele varre tudo e SOMA os achados. Com `set -e` abortaria no
+# primeiro problema e reportaria um, escondendo os outros. Por isso `set -uo pipefail` sem `-e`.
 set -uo pipefail
 DIR="${1:-.}"
 FAIL=0

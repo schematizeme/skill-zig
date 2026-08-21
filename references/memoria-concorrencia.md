@@ -29,7 +29,7 @@ mágico: a alocação é sempre visível na assinatura e no fluxo.
   um global escondido. Isso deixa o chamador dono da política de memória (arena por
   requisição, pool, buffer fixo).
 - **Escolha o allocator pelo caso:**
-  - **`GeneralPurposeAllocator` (GPA)** — de propósito geral em debug/dev, com
+  - **`DebugAllocator` (o antigo `GeneralPurposeAllocator`, renomeado no 0.16)** — de propósito geral em debug/dev, com
     **detecção de leak e de double-free**. Padrão em binário de longa duração.
   - **`ArenaAllocator`** — alocações de vida curta e mesmo escopo (uma requisição, um
     parse) liberadas **todas de uma vez** (`arena.deinit()`). Reduz o risco de free
@@ -81,7 +81,7 @@ Provar **ausência de vazamento** é obrigatório, não opcional.
 - **Todo teste que aloca usa `std.testing.allocator`** — ele **falha o teste** se sobrar
   memória ao final. Um `test` que aloca e passa com o testing allocator é prova de que o
   par alloc/free está correto naquele caminho. Detalhe em `references/testes.md` (o recorte Zig) — a **disciplina** de teste é da `schematize-qa`, e a segurança ofensiva da `schematize-pentest`.
-- **Binário de longa duração usa `GeneralPurposeAllocator`** com `defer
+- **Binário de longa duração usa `DebugAllocator`** (✔ 0.16.0; era `GeneralPurposeAllocator`) com `defer
   std.debug.assert(gpa.deinit() == .ok)` (ou log do relatório de leak) em debug — o
   `deinit()` do GPA **reporta leaks e double-frees**. Vazamento detectado é bug de
   entrega, entra na DoD (`references/entrega.md` §35).
@@ -117,6 +117,12 @@ externo, trate o overflow, nunca confie no wrap silencioso.
   compartilhado entre threads é protegido — **`std.Thread.Mutex`** (seção crítica curta),
   **`std.Thread.RwLock`** (muita leitura), ou operações **atômicas** (`@atomicRmw`,
   `@atomicLoad`/`@atomicStore`) para contadores/flags.
+  > ✔ **Verificado em 2026-08-21:** na `std` da linha estável atual o mutex é **`std.Io.Mutex`** — `std.Thread.Mutex`
+  > **não existe mais**. E `lock` recebe um `Io`; para estado compartilhado simples entre threads,
+  > prefira **`std.atomic.Value(T)`** com `fetchAdd`/`cmpxchg`, que não depende do runtime de I/O.
+  > *(Zig é pre-1.0: a `std` quebra entre minors. A versão exata vive em
+  > `references/stack-versoes.md`, com data de verificação.)*
+
 - **Seção crítica curta:** pegue o lock, mute/copie o necessário, **solte** — não segure
   o lock através de I/O ou trabalho pesado.
 - **Ordem de aquisição de locks consistente** (evita deadlock A→B / B→A).

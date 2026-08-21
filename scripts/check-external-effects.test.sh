@@ -5,6 +5,9 @@
 # Piso sem vermelho visto e prosa: o ADR-0004 nasceu de um incidente de >5.000 e-mails, e um gate
 # que nunca travou nao prova nada. Este teste planta cada uma das violacoes e exige exit 1.
 # Entrada: nenhuma. Saida: exit 0 todos os casos passam - exit 1 algum caso falhou.
+# EXCEÇÃO DECLARADA de strict mode (`schematize-shell` -> `references/piso.md` secao 1):
+# harness de teste roda sem `-e` de propósito — ele precisa continuar depois de um caso
+# vermelho para reportar TODOS, em vez de parar no primeiro.
 set -uo pipefail
 G="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/check-external-effects.sh"
 W="$(mktemp -d)"; trap 'rm -rf "$W"' EXIT

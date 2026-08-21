@@ -98,7 +98,7 @@ buffer/slice **DEVE** declarar um campo **"Memória:"** respondendo:
   pra dentro de um buffer do chamador (dangling se ele liberar antes)?
 
 Isso liga com `references/memoria-concorrencia.md` (regras de ownership, `defer`/
-`errdefer`, arenas, `GeneralPurposeAllocator` e detecção de leak). **Assinatura
+`errdefer`, arenas, `DebugAllocator` e detecção de leak). **Assinatura
 idiomática da casa:** o allocator é o **primeiro** parâmetro e o retorno é error
 union:
 

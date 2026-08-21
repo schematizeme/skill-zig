@@ -55,5 +55,19 @@ if [ -d "$SKILL_DIR/assets/commands" ]; then
   cp "$SKILL_DIR"/assets/commands/*.md "$CMD_DIR"/ 2>/dev/null || true
 fi
 
+# Hooks: o `assets/settings.claude.example.json` referencia `.claude/hooks/*` — sem esta copia,
+# StatusLine e PreCompact nascem QUEBRADOS (o settings aponta para arquivo que nunca chegou).
+# Achado do inventario da vistoria de 2026-08-21.
+HOOK_DIR="$DEST/.claude/hooks"
+for origem in "$SKILL_DIR/assets/hooks" "$SKILL_DIR/scripts/hooks"; do
+  [ -d "$origem" ] || continue
+  mkdir -p "$HOOK_DIR"
+  cp "$origem"/* "$HOOK_DIR"/ 2>/dev/null || true
+done
+if [ -d "$HOOK_DIR" ]; then
+  chmod +x "$HOOK_DIR"/*.sh 2>/dev/null || true
+  echo "✓ hooks em $HOOK_DIR (registre-os no .claude/settings.json — ver assets/settings.claude.example.json)"
+fi
+
 echo "✓ $SKILL_NAME instalada em $SKILL_DIR"
 echo "✓ comandos em $CMD_DIR (use /<slug>-help para listar)"

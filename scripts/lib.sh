@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
+# EXCEÇÃO DECLARADA de strict mode (`schematize-shell` -> `references/piso.md` secao 1):
+# este arquivo é uma BIBLIOTECA para `source` — ele NÃO liga `set -euo pipefail` de propósito.
+# `set -e` num arquivo sourceado muda as opções do shell do CHAMADOR (ação à distância): o script
+# que fizer `source lib.sh` passaria a abortar em lugares que ele não escolheu. Quem liga strict
+# mode é o script; a biblioteca só oferece funções.
+# shellcheck shell=bash
 # lib.sh — helpers compartilhados da malha de testes <project>_ops.
 # Source este arquivo no topo de todo script de teste:
 #   source "$_DIR/lib.sh"

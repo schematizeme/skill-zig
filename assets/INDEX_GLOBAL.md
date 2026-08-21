@@ -8,7 +8,7 @@
 
 | Repo/Serviço | Bounded context | O que faz (1 linha) | Linguagem | Owner |
 |---|---|---|---|---|
-| sensor_gateway_zig | ingest | gateway de telemetria (parser binário, interop C) | Zig 0.14.0 | squad-x |
+| sensor_gateway_zig | ingest | gateway de telemetria (parser binário, interop C) | Zig 0.16.0 | squad-x |
 | ... | ... | ... | ... | ... |
 
 ## Mapa de comunicação

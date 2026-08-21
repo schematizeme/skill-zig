@@ -1,5 +1,23 @@
 # Changelog — schematize-zig
 
+Todas as mudanças relevantes deste pacote, no formato [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
+com versionamento [SemVer](https://semver.org/lang/pt-BR/).
+
+## [0.3.0] — 2026-08-21
+Saneamento do catálogo conforme a vistoria de 2026-08-21.
+
+### Corrigido — as APIs do 0.16.0, verificadas RODANDO
+- **CSPRNG**: `std.crypto.random` **não existe mais**; o certo é **`io.random`** (dia a dia) e **`io.randomSecure`** (material de vida longa: sempre syscall, sem estado de processo — o que importa depois de `fork` e em VM clonada). Com o aviso que é o ponto do achado: *o risco não é o erro de compilação, é o conserto que ele provoca* — `std.Random.DefaultPrng` **compila** e é o Xoshiro previsível que a própria §Z.6 veta.
+- **Allocator**: `GeneralPurposeAllocator` → **`DebugAllocator`**, nos 6 lugares.
+- **Tempo constante**: `std.crypto.utils.timingSafeEql` → **`std.crypto.timing_safe.eql`**.
+- **Reader**: `std.io` não existe mais → **`std.Io.Reader`**.
+- **`build.zig.zon`**: `.name` agora é **enum literal** e **`fingerprint` é obrigatório** (o compilador sugere o valor). Com a armadilha registrada: copiar o `fingerprint` de outro projeto ao usar um `.zon` como molde produz **dois pacotes com a mesma digital**.
+
+Todas verificadas com o Zig **0.16.0** baixado e executado: os erros antigos reproduzidos, e um teste com as APIs novas passando (`All 1 tests passed`), mais `zig build` aceitando o `.zon` do exemplo.
+
+### Mudado
+- `anti-padroes.md`, `arquitetura.md`, `entrega.md`, `dados-eventos.md`, `seguranca.md`, `observabilidade.md` e `ops.md` viraram **ponteiro** (poda mecânica); os arquivos idiomáticos (memória manual, comptime) ficaram.
+
 ## [0.2.0] — 2026-08-20
 Piso novo: **efeito externo NUNCA sai de não-produção** — recorte Zig (vtable + error union) da normativa `schematize-engineering` → `references/efeitos-externos.md`.
 ### Adicionado
@@ -9,14 +27,10 @@ Piso novo: **efeito externo NUNCA sai de não-produção** — recorte Zig (vtab
 - **references/testes.md §22**: item obrigatório — teste nunca dispara efeito externo real (sink no `zig test`, endereço `<papel>+<run-id>-<n>@test.<domain>`, teste vermelho do guard e do cap, grep de CI contra `@gmail.com`/terceiros em fixture/seed/`simulated`).
 - **assets/CLAUDE.md**: piso 17 com o recorte Zig (vtable/sink/guard/error union/cap/fail-closed/rota nula) e o motivo (queima de IP e domínio derruba o OTP de produção).
 
-
 ## [0.1.2] — 2026-08-18
 Correção da contradição do muro pré-login de IAM (alinha ao `iam.md` da schematize-engineering).
 ### Mudado
 - **/zig-iam**: removido o "2º fator forte obrigatório antes do acesso pleno" e o "força 2º fator no 1º login" — o muro pré-login / deadlock de bootstrap VETADO pela norma. Agora senha+Email OTP = 2FA baseline; fator forte é nudge + step-up just-in-time.
-
-
-Formato: [Keep a Changelog]; versionamento: SemVer.
 
 ## [0.1.1] — 2026-08-18
 Q.A. repointado para a skill dedicada **schematize-qa**.

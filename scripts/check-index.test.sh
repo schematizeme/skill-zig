@@ -5,6 +5,9 @@
 # 5 lugares da normativa diziam que "o indice trava o merge". Este teste exige que o gate
 # reprove com indice defasado, ausente e sem parametro; e que passe com indice em dia.
 # Entrada: nenhuma. Saida: exit 0 todos os casos passam - exit 1 algum caso falhou.
+# EXCEÇÃO DECLARADA de strict mode (`schematize-shell` -> `references/piso.md` secao 1):
+# harness de teste roda sem `-e` de propósito — ele precisa continuar depois de um caso
+# vermelho para reportar TODOS, em vez de parar no primeiro.
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 W="$(mktemp -d)"; trap 'rm -rf "$W"' EXIT

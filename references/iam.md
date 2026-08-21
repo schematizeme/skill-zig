@@ -1,5 +1,16 @@
 # IAM — Identidade e Autorização da casa (piso inegociável) — recorte Zig
 
+> **PONTEIRO, não cópia.** A normativa agnóstica de IAM é da base:
+> **`schematize-engineering`** → `references/iam.md`. **Onde este arquivo divergir da
+> base, a BASE MANDA.**
+>
+> **Promovidas para a base em 2026-08-21** (viviam em 5–7 cópias aqui e em nenhum lugar lá): §5.1
+> **outbox transacional** na escrita de tupla ReBAC · **PDP fail-closed** · **denylist de `jti` como
+> consulta obrigatória**; §6 **refresh opaco CSPRNG hasheado**; §9 **comparação em tempo constante**
+> na negação deceptiva; **CSPRNG obrigatório** em toda aleatoriedade de segurança; *"framework de
+> auth pronto ≠ IAM da casa"*; §2.1 **parâmetros mínimos de argon2id**. Aqui elas aparecem só no que
+> muda de linguagem (a biblioteca, o tipo, o runtime).
+
 Piso normativo de **identidade, autenticação e autorização**, válido para toda skill da
 casa. **Todo projeto começa com um IAM robusto por desenho** — segurança é inegociável.
 Este arquivo é o recorte **Zig** do modelo agnóstico
@@ -37,7 +48,7 @@ Scaffold/auditoria por **`/zig-iam`**; testes adversariais na **schematize-pente
 - **Auth como app separada** — se em Zig, **`<projeto>_auth_zig`**; se o ADR de fit (§0)
   apontar Rust/Go, `<projeto>_auth_rs`/`_go` — **+ front de auth** próprio
   (`<projeto>_authfront`), com **repo, deploy, user Linux e systemd/container isolados**
-  (casa com o isolamento por app do `ops.md` §3). Comprometer o app principal **não**
+  (casa com o isolamento por app do `ops.md` da base (`schematize-engineering`) §3). Comprometer o app principal **não**
   compromete o IdP. O binário do auth é o **único** que carrega a chave privada de assinatura
   e os segredos de provedor (Resend/Twilio/OAuth) — que vêm de secret manager/env, **nunca**
   hardcoded nem por `@embedFile` (`references/seguranca.md §Z.5`).
@@ -103,7 +114,7 @@ Scaffold/auditoria por **`/zig-iam`**; testes adversariais na **schematize-pente
   > mais fraco que bcrypt bem configurado. Calibre para ~0,5–1 s no hardware do auth e registre
   > o valor medido no ADR do serviço; o default da lib normalmente é o mais fraco. Em `std.crypto.pwhash.argon2`, use `Params` explícito (não `Params.interactive_2id` sem medir).
 
-- **CSPRNG obrigatório** para OTP, `jti`, refresh, salt e nonce — `std.crypto.random` / fonte
+- **CSPRNG obrigatório** para OTP, `jti`, refresh, salt e nonce — `io.random` / `io.randomSecure` (✔ 0.16.0; `std.crypto.random` **não existe mais**) / fonte
   segura, **nunca** PRNG previsível (`references/seguranca.md §Z.6`). Comparação de OTP/hash em
   **tempo constante** (§Z.7).
 

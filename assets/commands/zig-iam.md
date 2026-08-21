@@ -17,7 +17,7 @@ Confirme/scaffolde que o auth é **aplicação SEPARADA** (`references/iam.md` �
 - App própria `<projeto>_auth_zig` (ou `_rs`/`_go` por ADR de fit — auth/cripto costuma pedir Rust/Go) + front próprio `<projeto>_authfront`,
   servidos em **`auth.<domain>`** — **VETADO** monolith apensado (nem `internal/auth` do
   serviço principal). **Registre o ADR de fit da linguagem do auth** (`references/iam.md §0`, `references/stack-versoes.md`).
-- Repo/deploy/**user Linux + systemd isolados** por conta própria (casa com `ops.md` §3).
+- Repo/deploy/**user Linux + systemd isolados** por conta própria (casa com `ops.md` da base (`schematize-engineering`) §3).
 - App principal e clientes **delegam por OIDC/OAuth2.1 + PKCE**; a **chave de assinatura só
   no auth**, consumidores validam por **JWKS público** (o PEP cacheia o JWKS). Um serviço **Zig** de produto consome o auth por JWKS como qualquer outro.
 

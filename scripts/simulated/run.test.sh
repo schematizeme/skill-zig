@@ -7,6 +7,7 @@
 # que fazia toda persona customizada virar suspeita de vazamento cross-tenant.
 # Gate que nunca reprovou nao e gate: este teste sobe um alvo de mentira e exige o vermelho.
 # Entrada: nenhuma. Saida: exit 0 todos os casos passam - exit 1 algum caso falhou.
+# strict-ok: harness de teste — continua depois de um caso vermelho para reportar todos (`schematize-shell` -> `references/piso.md` secao 1)
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORK="$(mktemp -d)"
@@ -40,6 +41,28 @@ run_sim() { # run_sim <dir-de-config> -> imprime a saida, devolve o exit code
   ( cd "$1" && PROJECT_TEST_API_BASE="http://127.0.0.1:$PORT" PROJECT_TEST_LOG_DIR="$1/logs" \
       PROJECT_SIM_SKIP_MUTATIONS=1 python3 run.py 2>&1 )
 }
+
+echo "── PRE-FLIGHT: run que MUTA sem provider sink ABORTA antes do 1o request"
+PF="$WORK/preflight"; mkdir -p "$PF"
+cp "$HERE/run.py" "$PF/run.py"
+printf '[{"method":"POST","path":"/a","category":"public","mutates":true}]\n' > "$PF/routes.json"
+printf '{"anon":{"token":null,"expected_access":["public"]}}\n' > "$PF/personas.json"
+OUT=$( cd "$PF" && APP_ENV=hml PROJECT_TEST_API_BASE="http://127.0.0.1:$PORT" python3 run.py 2>&1 ); z=$?
+if [ "$z" -eq 1 ] && grep -q 'PRÉ-FLIGHT FALHOU' <<<"$OUT" && grep -q 'MAIL_PROVIDER' <<<"$OUT"; then
+  echo "  ✔ exit 1 e nada foi executado (o padrao do incidente das 5.000 mensagens)"
+else echo "  ✖ rodou mesmo assim: $OUT"; rc=1; fi
+
+echo "── PRE-FLIGHT: com sink + dominio + cap, o run PROSSEGUE"
+OUT=$( cd "$PF" && APP_ENV=hml MAIL_PROVIDER=sink TEST_MAIL_DOMAIN=test.acme.com MAIL_MAX_PER_RUN=50 \
+       PROJECT_TEST_API_BASE="http://127.0.0.1:$PORT" PROJECT_TEST_LOG_DIR="$PF/logs" python3 run.py 2>&1 )
+if ! grep -q 'PRÉ-FLIGHT FALHOU' <<<"$OUT"; then echo "  ✔ passou do pre-flight"; else echo "  ✖ barrou indevidamente: $OUT"; rc=1; fi
+
+echo "── PRE-FLIGHT: producao exige confirmacao explicita"
+OUT=$( cd "$PF" && APP_ENV=production MAIL_PROVIDER=sink TEST_MAIL_DOMAIN=test.acme.com MAIL_MAX_PER_RUN=50 \
+       PROJECT_TEST_API_BASE="http://127.0.0.1:$PORT" python3 run.py 2>&1 ); z=$?
+if [ "$z" -eq 1 ] && grep -q 'PROJECT_SIM_ALLOW_PRD' <<<"$OUT"; then
+  echo "  ✔ exit 1 sem PROJECT_SIM_ALLOW_PRD=1"
+else echo "  ✖ rodou em prd sem confirmacao: $OUT"; rc=1; fi
 
 echo "── A1: rota FANTASMA plantada (servida, fora do catalog) reprova"
 G="$WORK/ghost"; mkdir -p "$G"

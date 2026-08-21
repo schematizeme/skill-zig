@@ -13,6 +13,7 @@
 # ve verde e vermelho. O --self-check NUNCA sai 1 por ter falhado de proposito: sair 1 ali
 # significa que a falha forcada passou despercebida.
 
+# strict-ok: harness de auto-verificação — ele PRECISA continuar depois da falha proposital para provar que o runner sabe reportar FAIL (`schematize-shell` -> `references/piso.md` secao 1)
 set -uo pipefail
 _DIR="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=lib.sh

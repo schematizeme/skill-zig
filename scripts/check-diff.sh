@@ -6,6 +6,9 @@
 # Cobre o que dá pra checar por regex/contagem. O julgamento fino (semântica de
 # auth, coerção de tipo, etc.) fica pro /zig-review com leitura humana/da IA.
 
+# EXCEÇÃO DECLARADA de strict mode (`schematize-shell` -> `references/piso.md` secao 1):
+# este script é um COLETOR — ele varre tudo e SOMA os achados. Com `set -e` abortaria no
+# primeiro problema e reportaria um, escondendo os outros. Por isso `set -uo pipefail` sem `-e`.
 set -uo pipefail
 BASE="${1:-origin/main}"
 FAIL=0

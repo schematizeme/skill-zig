@@ -9,7 +9,7 @@ jobs:
   standards-gate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with: { fetch-depth: 0 }
       - name: Gate de padrões (DoD/§37) no diff
         run: bash .claude/skills/schematize-zig/scripts/check-diff.sh "origin/${{ github.base_ref || 'main' }}"
@@ -26,7 +26,7 @@ jobs:
   build-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       # Zig é pre-1.0: fixe a versão EXATA (stack-versoes.md). Ajuste a versão pinada.
       - uses: mlugg/setup-zig@v1
         with: { version: 0.14.0 }
@@ -42,7 +42,7 @@ jobs:
   test-kit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Smoke + security + authz + hardening (PR — a `schematize-qa` (gates de CI, `references/execucao.md` secao 6))
         run: |
           # <projeto> test smoke && <projeto> test security && <projeto> test authz && <projeto> test hardening
@@ -53,7 +53,7 @@ jobs:
   security-scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Trivy fs
         uses: aquasecurity/trivy-action@master
         with: { scan-type: fs, severity: HIGH,CRITICAL, exit-code: '1' }

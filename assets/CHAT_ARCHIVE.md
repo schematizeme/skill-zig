@@ -1,6 +1,6 @@
 # Chat Archive — <contexto>
 
-> Archive obrigatório (§28.1) para conversas que produzem decisão arquitetural/
+> Archive obrigatório (`schematize-archive` -> `references/archive.md` (chats/)) para conversas que produzem decisão arquitetural/
 > segurança, mudança de contrato público, escolha de tecnologia, resolução de
 > incidente, ou geração de código não trivial (inclui IA — §34).
 > Caminho: <project>_archive/chat/<YYYY-MM-DD-HH-MM-SS>-<contexto>.md

@@ -2,7 +2,7 @@
 name: schematize-zig
 metadata:
   version: 0.2.0
-description: Padrões normativos de engenharia da casa com Zig — baixo nível, performance máxima, controle explícito de memória (allocators, sem GC), comptime, error unions, interop com C e artefatos estáticos pequenos. Use SEMPRE que for projetar, gerar, revisar ou refatorar qualquer serviço, CLI, componente de sistema, parser, driver, tooling ou biblioteca em Zig — mesmo que o usuário não cite "padrão" explicitamente. Aplique também ao decidir arquitetura, escolher stack (rol sancionado + fit), modelar eventos/banco, desenhar auth/identidade, escrever testes/pentest, configurar observabilidade, ou produzir ADR/runbook/archive. Contém pisos inegociáveis de segurança (segredo nunca no cliente, sem SQL concatenado, auth server-side, IAM por desenho — auth como app separada, ID≠email, ≥2 fatores, ReBAC multi-tenant, archive obrigatório) e de memória/código (teste com allocator que detecta leak, todo alloc com free casado, ReleaseSafe salvo perfil, ≤750 linhas/arquivo, uma função por arquivo, doc-comment `///`, MAPA da aplicação) que vetam atalhos inseguros. Frontend delega ao schematize-web; auth/cripto sensível costuma encaixar melhor em Rust (fit).
+description: Padrões normativos de engenharia da casa no recorte Zig — baixo nível, interop C, controle de memória explícito — cobrindo arquitetura, alocadores e detecção de leak, concorrência, segurança, IAM, testes/pentest, dados, observabilidade, build/deploy e archive. Use SEMPRE que for projetar, gerar, revisar ou refatorar serviço, biblioteca, binding C, parser, build.zig, teste ou deploy em Zig — mesmo sem citar "padrão" —, e ao escolher stack (Zig entra por fit + ADR no rol Go/Rust/Elixir/C#/Zig/Ruby), desenhar auth, configurar observabilidade ou produzir ADR/runbook/archive. Pisos: segredo nunca no cliente; erro nunca engolido (`catch {}`/`catch unreachable` vetados); todo alocador testado contra leak com `std.testing.allocator`; auth server-side; IAM como app separada; efeito externo NUNCA sai de não-produção — sink por default, guard deny-by-default, cap por execução (atômico, válido também em prd), domínio de teste em rota nula; archive obrigatório. Pentest na schematize-pentest.
 ---
 
 # Padrões de Engenharia da Casa — Zig
@@ -19,6 +19,36 @@ A casa **não tem "a linguagem única"**; tem o **rol sancionado** (Go, Rust, El
 - **Zig NÃO é o default de tudo:** um serviço de **auth/cripto** costuma encaixar melhor em **Rust** (segurança de memória por design, ecossistema maduro); um job de rede simples em **Go**; realtime em **Elixir**. Zig entra quando o requisito é **controle manual / interop C / artefato pequeno**. Detalhe em `references/arquitetura.md` (§3) e `references/stack-versoes.md`.
 - **Zig é pre-1.0:** a **versão exata do compilador** é parte do contrato de build — fixe-a (`references/stack-versoes.md`).
 
+## Precedência e herança (leia antes de divergir)
+
+Esta skill é o **recorte Zig** da base. Duas regras governam a relação, e elas resolvem sozinhas
+quase toda dúvida de "onde está escrito o quê":
+
+1. **Onde esta skill divergir da base, a BASE MANDA.** `schematize-engineering` é a normativa; aqui
+   mora a **especialização** — o mecanismo, a lib, a sintaxe, o gate da linguagem. Divergência de
+   *piso* entre este arquivo e a base é **defeito desta skill**, não uma variante local aceitável.
+   Achou uma? É item de correção, não licença. *(Foi assim que o `argon2id-only` da casa virou
+   "argon2id ou PBKDF2" em uma skill só, e o rol de 6 linguagens virou "só Go e Rust" em três.)*
+2. **O que não está repetido aqui é HERDADO, não dispensado.** A ausência de um piso neste repo
+   nunca significa que ele não vale — significa que ele não muda de forma nesta linguagem. Em
+   especial, valem integralmente, sem cópia local:
+   - **§28 Archive** — `<projeto>/<projeto>_archive/` é **repositório git próprio, PRIVADO e
+     obrigatório**, criticidade 0 (`schematize-archive`; ADR-0005 para a planta canônica).
+   - **§39 Índice/MAPA** — enumeração exaustiva (uma entrada por unidade chamável, `M == N`) e o
+     **grafo com arestas em ASCII (`A -> B`), NUNCA a seta unicode** — o parser do app lê ASCII.
+   - **§35 Definition of Done** e a lista de anti-padrões **§37** (citada por **título**, nunca por
+     número: a numeração dos itens diverge entre skills).
+   - **IAM** (`schematize-engineering` → `references/iam.md`): identidade ≠ email, ≥2 fatores, ReBAC multi-tenant,
+     **alcançabilidade do 2º fator** (o fator de recuperação tem de ser alcançável quando o
+     principal cai — senão o 2FA vira bug de bootstrap que tranca o dono para fora), os parâmetros
+     mínimos de argon2id, sessão longa e logout irreversível.
+   - **Rol sancionado** — Go, Rust, Elixir, C#, Zig, Ruby, por **fit + ADR**
+     (`schematize-engineering` → `references/linguagens.md`). Esta skill é **uma** delas, não a
+     régua das outras.
+   - **Efeito externo** nunca sai de não-produção (`schematize-engineering` →
+     `references/efeitos-externos.md`; gate em `scripts/check-external-effects.sh`, distribuído
+     aqui — ADR-0008).
+
 ## Comandos (Claude Code)
 
 Digite `/zig-help` pra ver todos. Em resumo:
@@ -34,7 +64,7 @@ Digite `/zig-help` pra ver todos. Em resumo:
 | `/zig-index` | (re)gera o índice de microfunções a partir dos doc-comments `///` |
 | `/zig-ops` | audita/scaffolda o `<projeto>_ops` (interface única): fluxo de ambientes, instalação paralela (`nproc`), independência |
 
-Todos os comandos são prefixados com o slug (`zig-`), então **convivem sem conflito** com `schematize-go` (`go-*`), `schematize-rust` (`rust-*`) e `schematize-web` (`web-*`) na mesma máquina. Ficam em `assets/commands/` e são instalados em `.claude/commands/`.
+Todos os comandos são prefixados com o slug (`zig-`), então **convivem sem conflito** com as skills irmãs do rol (`go-*`, `rust-*`, `elixir-*`, `cs-*`, `ruby-*`) e `schematize-web` (`web-*`) na mesma máquina. Ficam em `assets/commands/` e são instalados em `.claude/commands/`.
 
 ## Como usar esta skill
 
@@ -54,8 +84,7 @@ Mapa de references — leia o que casa com a tarefa:
 | Segurança, auth, JWT, multi-tenancy, LGPD, **build mode (ReleaseSafe/Fast), interop C, overflow, segredos** | `references/seguranca.md` |
 | **IAM — auth como app separada (`auth.<domain>`), ID≠email, ≥2 fatores, ReBAC multi-tenant deny-default, sessão 7d/90d, logout irreversível; posicionamento honesto (auth costuma pedir Rust/Go — fit)** | `references/iam.md` |
 | **Cadeia de suprimentos: `build.zig.zon` com hash, pin da toolchain, cross-compile, SBOM, scan que trava, imagem mínima/pinada/assinada** | `references/cadeia-suprimentos.md` |
-| Testes — `zig test`, `std.testing`, leak gate, categorias de teste (§22.1–22.3) | `references/testes.md` |
-| Testes — `zig build test`, padrão de script, seeds, CI, pentest, Q.A. plan-first (§22.4–23) | `references/testes-execucao.md` |
+| Testes — o recorte Zig (runner, sintaxe, armadilhas do dialeto). **A disciplina é da `schematize-qa`.** | `references/testes.md` |
 | Observabilidade, `std.log` estruturado, healthchecks, performance, FinOps (ecossistema jovem — pragmático) | `references/observabilidade.md` |
 | Config, deploy/K8s, git/PR, ownership, runbooks/incidentes, ADR, **archive** (§20–28) | `references/operacao.md` |
 | **Ops (control plane): fluxo dev→local→github→hml→prd (nada direto no servidor), ops como interface única (100%, autônomo), instalação paralela=`nproc`, independência=invariante** | `references/ops.md` |
@@ -90,7 +119,7 @@ Nunca violados, nem "pra funcionar", nem "pra ir mais rápido". Lista completa e
 
 ## Testes — o que conta como "verde de verdade"
 
-Detalhe em `references/testes.md` (§22.1–22.3) e `references/testes-execucao.md` (§22.4–23). Essencial: `zig test`/blocos `test "..." {}` que **rodam com o `std.testing.allocator`** (leak vira FAIL); smoke que assere shape (não só 200) e tem self-check que força um FAIL conhecido; unit agressivo com caminho de erro (`expectError` em todo `!T`), casos hostis (tipo/tamanho errado, unicode, null byte, boundary, overflow de inteiro); pentest que prova rejeição rota a rota; `simulated` cruzando rotas × personas × injections cobrindo 100% das rotas; e Q.A. plan-first (planeja, gera MD, pede aprovação antes de rodar).
+Detalhe em `references/testes.md` (o recorte Zig) — a **disciplina** de teste é da `schematize-qa`, e a segurança ofensiva da `schematize-pentest`.
 
 ## Andaime pronto (scripts e templates)
 

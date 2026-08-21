@@ -4,6 +4,7 @@ tag = "Sistemas · Zig"
 status = "beta"
 order = 10
 current_version = "0.2.0"
+requires = ["engineering"]   # o piso vem da base; esta skill so especializa (SKILL.md, "Precedencia e heranca")
 href = "/zig"
 
 [descriptions]

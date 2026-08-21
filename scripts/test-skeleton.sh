@@ -3,7 +3,7 @@
 # Descrição clara do que cobre e o esperado.
 # Esperado: status X em caso Y. Falha = significado Z.
 #
-# Skeleton obrigatório (§22.4). Copie para tests/<mode>/<name>.sh e preencha.
+# Skeleton obrigatório (ver a `schematize-qa` (padrao de script, `references/execucao.md` secao 3)). Copie para tests/<mode>/<name>.sh e preencha.
 # Cada script é executável standalone e sai 0 (tudo passou) ou 1 (qualquer falha).
 
 set -uo pipefail

@@ -1,5 +1,10 @@
 # Stack e Versões — Zig (pre-1.0), toolchain e quando usar Zig
 
+> **Verificado em: 2026-08-21** — a estável corrente do Zig é a **0.16.0**
+> (conferida em `ziglang.org/download/index.json` nesta data, e usada para compilar e rodar os
+> exemplos de `references/iam.md` §3.1: `zig test` → *All 6 tests passed*, exit 0). O 0.14.x, que
+> este anexo usava como referência, está **duas minors atrás**.
+>
 > Parte da skill **schematize-zig**. Define a preferência de linguagem desta skill
 > dentro do **rol sancionado** da casa e — o ponto mais sensível do Zig — a **política
 > de versão do compilador**. Zig é **pre-1.0**: a versão exata é parte do contrato de
@@ -44,11 +49,13 @@ Zig **ainda não chegou ao 1.0**. Consequências que viram piso:
 
 - **Breaking changes entre versões são esperados** — mudanças de sintaxe, de API da
   `std`, do sistema de build (`build.zig`) e do gerenciador de pacotes acontecem entre
-  releases. Código que compila em `0.14.x` pode **não** compilar em `0.15.x`.
+  releases. Código que compila em `0.14.x` pode **não** compilar em `0.15.x` — e de fato não
+  compila: entre 0.14 e 0.16 a `std` moveu `std.Thread.Mutex` para `std.Io.Mutex` (com `lock`
+  recebendo um `Io`), entre outras quebras. **Pin exato, e o bump é tarefa com teste.**
 - A **versão exata do compilador faz parte do contrato de build.** "Roda no meu Zig"
   não é reprodutível se o teu Zig e o do CI diferem. A versão é tão parte do build
   quanto o `build.zig.zon`.
-- Prefira **releases marcadas** (`0.14.0`, `0.15.1`, …) a `master`/nightly em produção.
+- Prefira **releases marcadas** (hoje: **`0.16.0`**) a `master`/nightly em produção.
   Nightly só em spike de exploração, nunca no artefato que vai pra hml/prd.
 
 ## 3. Pin da toolchain (piso)
@@ -113,7 +120,7 @@ Reconheça o custo antes de escolher (e registre no ADR se escolher mesmo assim)
 
 ## 6. Coexistência com as outras skills
 
-`schematize-zig`, `schematize-go`, `schematize-rust` e `schematize-web` podem estar
+`schematize-zig`, as irmãs do rol e a `schematize-web` podem estar
 habilitadas na mesma máquina ao mesmo tempo. Não há conflito: cada skill instala em
 `.claude/skills/schematize-<slug>/` e seus comandos são prefixados pelo slug
 (`/zig-*`, `/go-*`, `/rust-*`, `/web-*`). Um sistema real pode ser poliglota — um

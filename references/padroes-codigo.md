@@ -154,7 +154,7 @@ mapa incompleto, não de falta de busca.
 
 - **`zig fmt` é a formatação canônica** e não se discute (sem bikeshed de estilo).
   O CI roda **`zig fmt --check`** e **BLOQUEIA** se algum arquivo não estiver
-  formatado (ver `references/testes-execucao.md` §22.6).
+  formatado (gates de CI: `schematize-qa` -> `references/execucao.md`).
 - Nomes seguem a convenção do `std`: `TypesAreCamelCase`, `functionsAreCamelCase`,
   `variables_are_snake`, `CONSTANTS` conforme o `std`. Sem inventar dialeto.
 - `zig fmt` alinha e organiza, mas **não escreve doc-comment** — o `///` é
@@ -167,7 +167,7 @@ Todo projeto que segue esta skill mantém um **`MAPA.md`** em
 root do projeto**. Todo MD **gerado** (MAPA, índices, planos, relatórios, handoffs)
 mora no archive; o root fica limpo (só código, `build.zig`, `build.zig.zon`, config
 e os poucos MDs mantidos à mão: README, `CLAUDE.md`, LICENSE). Layout canônico do
-archive em `references/operacao.md` (§28). É parte da entrega, atualizado **no mesmo
+archive em `schematize-engineering` -> `references/operacao.md` (§28). É parte da entrega, atualizado **no mesmo
 PR** que mexe no código (o archive é versionado). Ele lista, para **cada** função —
 pública e privada, **sem exceção** (uma entrada por função):
 

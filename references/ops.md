@@ -1,6 +1,7 @@
+<!-- cross-skill: references/orquestracao.md -> schematize-engineering -->
 # Operação pelo ops — ambientes, instalação e correção (control plane)
 
-> O **`<projeto>_ops`** é a **interface única** de operação do sistema. Invariantes desta reference, todos **INEGOCIÁVEIS**: (1) nada chega ao servidor sem passar pelo **fluxo de promoção** (dev local → teste local → GitHub → hml → prd); (2) o ops provisiona num **workspace por aplicação** (`/<app>/`) e todo **redeploy é destrutivo na aplicação, semeado pelo `/<app>/.env` global** — mas **nunca destrói dados**; (3) cada serviço roda **isolado por usuário** (user Linux + systemd hardened); (4) **100%** de instalação/atualização/correção/config passa por uma **ferramenta do ops** — nunca à mão; (5) instalar é **paralelo por padrão** (= `nproc`), e falha no paralelo = **bug de independência** (prioridade máxima). Contexto do ops: `arquitetura.md` §2. Deploy/ambientes: `operacao.md` §21. Test kit: `testes.md` §22.1.
+> O **`<projeto>_ops`** é a **interface única** de operação do sistema. Invariantes desta reference, todos **INEGOCIÁVEIS**: (1) nada chega ao servidor sem passar pelo **fluxo de promoção** (dev local → teste local → GitHub → hml → prd); (2) o ops provisiona num **workspace por aplicação** (`/<app>/`) e todo **redeploy é destrutivo na aplicação, semeado pelo `/<app>/.env` global** — mas **nunca destrói dados**; (3) cada serviço roda **isolado por usuário** (user Linux + systemd hardened); (4) **100%** de instalação/atualização/correção/config passa por uma **ferramenta do ops** — nunca à mão; (5) instalar é **paralelo por padrão** (= `nproc`), e falha no paralelo = **bug de independência** (prioridade máxima). Contexto do ops: `arquitetura.md` §2. Deploy/ambientes: `schematize-engineering` -> `operacao.md` §21. Test kit: `testes.md` a `schematize-qa` (test kit, `references/execucao.md` secao 2).
 
 ## 1. Ambientes e o fluxo de promoção (nada direto no servidor)
 
@@ -39,7 +40,7 @@ Cada serviço roda **confinado**, pra que um comprometimento não vaze para os o
 
 - **Proibido** `ssh servidor` + comando ad-hoc, editar arquivo no servidor, `docker`/`kubectl`/`systemctl` na mão, script solto. Se **não existe** comando de ops pra aquilo, **cria o comando no ops** — não faz por fora. O que não está no ops não aconteceu (e não é reproduzível).
 - **Autonomia e completude (requisito, não meta):** o ops é uma **aplicação/CLI coesa, idempotente e autodescritiva** que instala e opera o sistema inteiro **sem depender da IA**. Um humano — o próprio usuário — provisiona um servidor **do zero** só com o ops. `ops install` sobe tudo; `ops redeploy` recria do seed; `ops doctor` diagnostica tudo.
-- **Superfície mínima** (idempotentes, com `--help` e saída machine-readable): `bootstrap` (cria `/<app>/` e clona os repos) · `install`/`up` · `redeploy` (destrutivo, do seed §2) · `update` · `config` (do `/<app>/.env`) · `migrate` (reversível) · `health`/`doctor` · `rollback` · `logs`/`troubleshoot` · `reset` (destrói dados — gated, dev/hml) · `test` (§22.1).
+- **Superfície mínima** (idempotentes, com `--help` e saída machine-readable): `bootstrap` (cria `/<app>/` e clona os repos) · `install`/`up` · `redeploy` (destrutivo, do seed §2) · `update` · `config` (do `/<app>/.env`) · `migrate` (reversível) · `health`/`doctor` · `rollback` · `logs`/`troubleshoot` · `reset` (destrói dados — gated, dev/hml) · `test` (ver a `schematize-qa` (test kit, `references/execucao.md` secao 2)).
 - **Correção/hotfix é `ops update`/`ops redeploy`/`ops rollback`** — nunca mão no servidor (§1). O ops sobe com observabilidade integrada (§16) e **grava o archive** de cada operação (§28).
 
 ## 5. Instalação SEMPRE paralela (= nº de cores)
@@ -62,13 +63,13 @@ Se a instalação/subida **paralela falha** (race, porta/arquivo/lock disputado,
 | Tema | Onde |
 |---|---|
 | `<projeto>_ops` como control plane (bootstrap/update/manutenção) | `arquitetura.md` §2 |
-| Deploy, ambientes, artefato imutável, rollback, preview | `operacao.md` §21 |
-| Test kit do sistema vivo (roda pelo ops) | `testes.md` §22.1 |
+| Deploy, ambientes, artefato imutável, rollback, preview | `schematize-engineering` -> `operacao.md` §21 |
+| Test kit do sistema vivo (roda pelo ops) | `testes.md` a `schematize-qa` (test kit, `references/execucao.md` secao 2) |
 | Observabilidade integrada do ops | `observabilidade.md` §16 |
 | Independência de runtime / sem monólito distribuído | `CLAUDE.md` pisos 10 e 6 |
 | Segredo nunca versionado (o seed referencia o secret manager) | `seguranca.md` |
 | Paralelização (o análogo em execução do agente) | `references/orquestracao.md` |
-| Archive de cada operação | `operacao.md` §28 (`<projeto>_archive/`) |
+| Archive de cada operação | `schematize-engineering` -> `operacao.md` §28 (`<projeto>_archive/`) |
 
 Comando: **`/<slug>-ops`** (ex.: `/eng-ops`, `/zig-ops`) — audita/scaffolda o ops, verifica o fluxo de ambientes, o layout `/<app>/` + seed, o isolamento por usuário, a paralelização (`nproc`) e a independência.
 

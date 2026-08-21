@@ -139,10 +139,10 @@ Projetos legados onde código já existe sem separação de camadas **podem** ad
 - Toda nova feature/refactor em código tocado segue o layout completo (`domain/`, `application/`, `infrastructure/`, `interface/`) — não introduzir mais código "flat".
 - Ao mover/quebrar arquivo legado, organize já em folders DDD mesmo que internamente algum módulo ainda misture responsabilidades (ex.: um `application/` ainda chamando SQL direto). Estrutura primeiro, inversão depois.
 - Cada PR que toca arquivo híbrido **deve** mover ao menos um pedaço pra direção certa (ex.: extrair entidade pra `domain/`, mover query pra `infrastructure/repositories/`).
-- ADR registrando o débito e o plano de remoção: `<project>/docs/adr/<n>-ddd-migration-<contexto>.md`.
+- ADR registrando o débito e o plano de remoção: `<projeto>/<projeto>_archive/decisoes/<n>-ddd-migration-<contexto>.md`.
 
 **SHOULD**
-- Manter teste de cobertura por camada (§22) durante a transição — domain começa com 0%, sobe a cada PR.
+- Manter teste de cobertura por camada (ver a `schematize-qa`) durante a transição — domain começa com 0%, sobe a cada PR.
 - Guard test (em `zig build test`) que **rejeita imports proibidos** logo que possível (mesmo com whitelist de exceções legadas):
   - `domain/` não importa drivers de banco, `@cImport`, `infrastructure/*`, `application/*`, `interface/*`.
   - `application/` não importa `interface/*`.
@@ -188,7 +188,7 @@ tests/               # testes de integração (unitários ficam junto do código
 **MUST**
 - Build por **`zig build`** dirigido pelo **`build.zig`** — nada de scripts shell soltos compilando `.zig` na mão (o build declarativo é a fonte única de steps, flags e modo de release).
 - **Dependências declaradas em `build.zig.zon`** com **hash de integridade** por dependência. Sem hash = sem dependência (cadeia de suprimentos, `references/cadeia-suprimentos.md`). Pin exato da versão do compilador em `references/stack-versoes.md`.
-- Testes unitários em blocos `test "..."` junto do código que exercitam; testes de integração em `tests/`. Ambos rodam por `zig build test` — ver `references/testes-execucao.md`.
+- Testes unitários em blocos `test "..."` junto do código que exercitam; testes de integração em `tests/`. Ambos rodam por `zig build test` — ver a `schematize-qa`.
 
 ---
 

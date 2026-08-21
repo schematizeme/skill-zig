@@ -4,10 +4,14 @@
 # deveria falhar, o smoke está cego e o CI deve quebrar.
 #
 # Uso:
-#   bash smoke-selfcheck.sh            # modo normal: deve sair 0
-#   bash smoke-selfcheck.sh --self-check  # força falhas conhecidas: deve sair 1
+#   bash smoke-selfcheck.sh            # modo normal: sai 0 se a suite passou
+#   bash smoke-selfcheck.sh --self-check  # forca uma falha conhecida:
+#                                         #   sai 0 SE o runner reportou o FAIL (e a prova)
+#                                         #   sai 1 se NAO reportou (smoke cego)
 #
-# No CI: rode AMBOS. Normal=0 e self-check=1 provam que o smoke vê verde e vermelho.
+# No CI: rode AMBOS. Normal=0 e --self-check=0-tendo-reportado-FAIL provam que o smoke
+# ve verde e vermelho. O --self-check NUNCA sai 1 por ter falhado de proposito: sair 1 ali
+# significa que a falha forcada passou despercebida.
 
 set -uo pipefail
 _DIR="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -42,9 +46,10 @@ fi
 
 test_summary "smoke/self-check"
 
-# Contrato do self-check:
-#   modo normal      -> TEST_EXIT_CODE deve ser 0
-#   modo --self-check-> TEST_EXIT_CODE deve ser 1 (a falha forçada disparou)
+# Contrato do self-check (o codigo abaixo E a definicao; a doc do topo diz o mesmo):
+#   modo normal       -> exit = TEST_EXIT_CODE (0 se a suite passou)
+#   modo --self-check -> exit 0 SE TEST_EXIT_CODE==1 (o runner reportou a falha forcada)
+#                        exit 1 se TEST_EXIT_CODE!=1 (smoke cego: a falha nao foi vista)
 if [[ "$MODE" == "--self-check" ]]; then
   if [[ "$TEST_EXIT_CODE" -eq 1 ]]; then
     echo "${C_GRN}self-check OK: o runner reportou FAIL como esperado.${C_RST}"

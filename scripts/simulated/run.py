@@ -36,14 +36,14 @@ SKIP_MUTATIONS = os.environ.get("PROJECT_SIM_SKIP_MUTATIONS", "") == "1"
 
 HERE = pathlib.Path(__file__).resolve().parent
 
-# Personas mínimas (§22.5). Carregadas de personas.json se existir.
+# Personas mínimas (schematize-qa · references/execucao.md). Carregadas de personas.json se existir.
 DEFAULT_PERSONAS = {
     "superadmin":   {"token": None, "expected_access": ["public", "auth", "authenticated", "admin", "internal", "import"]},
     "tenant_admin": {"token": None, "expected_access": ["public", "auth", "authenticated", "admin"]},
     "normal_user":  {"token": None, "expected_access": ["public", "auth", "authenticated"]},
 }
 
-# Injeções mínimas (§22.3 / simulated). Carregadas de injections.json se existir.
+# Injeções mínimas (matriz simulated — schematize-qa · references/categorias.md). Carregadas de injections.json se existir.
 DEFAULT_INJECTIONS = {
     "sqli":            ["' OR 1=1 --", "'; DROP TABLE users CASCADE; --"],
     "xss":             ["<script>alert(1)</script>", "<img src=x onerror=alert(1)>"],
@@ -74,8 +74,35 @@ def load_route_catalog():
     return cat
 
 
-def request(method, path, token=None, body=None):
-    url = API_BASE.rstrip("/") + path
+def served_routes():
+    """Rotas SERVIDAS de verdade, para reconciliar contra o catalog (rota fantasma).
+
+    Fontes, em ordem: (1) `PROJECT_SIM_SERVED_URL` ou `<API_BASE>/openapi.json` — documento
+    OpenAPI servido pelo próprio alvo; (2) `served.json` ao lado deste script, no mesmo formato
+    do catalog. Devolve (conjunto_de_rotas, origem) ou (None, motivo) quando NÃO foi possível
+    descobrir — e nesse caso o run REPROVA, em vez de dar cobertura total por omissão (A1).
+    """
+    url = os.environ.get("PROJECT_SIM_SERVED_URL") or (API_BASE.rstrip("/") + "/openapi.json")
+    code, text, _ = request("GET", "", token=None, body=None, absolute=url)
+    if code == 200:
+        try:
+            doc = json.loads(text)
+            paths = doc.get("paths", {})
+            if paths:
+                out = {(m.upper(), p) for p, ops in paths.items()
+                       for m in ops if m.lower() in ("get", "post", "put", "patch", "delete", "head", "options")}
+                return out, f"OpenAPI em {url}"
+        except (ValueError, AttributeError):
+            pass
+    local = load_json("served.json", None)
+    if local:
+        return {(r["method"].upper(), r["path"]) for r in local}, "served.json"
+    return None, (f"nenhuma fonte de rotas servidas: {url} não devolveu OpenAPI utilizável "
+                  "e served.json não existe. Defina PROJECT_SIM_SERVED_URL ou crie served.json.")
+
+
+def request(method, path, token=None, body=None, absolute=None):
+    url = absolute if absolute else API_BASE.rstrip("/") + path
     data = None
     headers = {"Accept": "application/json"}
     if body is not None:
@@ -95,13 +122,20 @@ def request(method, path, token=None, body=None):
     return code, text, round((time.time() - t0) * 1000)
 
 
-def classify(category, persona, code, body, injected):
-    """Retorna ('AUTO'|'REVIEW', motivo)."""
+def classify(category, persona, code, body, injected, personas):
+    """Retorna ('AUTO'|'REVIEW', motivo).
+
+    `personas` é o dicionário CARREGADO (personas.json quando existe), nunca a constante
+    DEFAULT_PERSONAS: consultar a constante fazia toda persona customizada cair em
+    expected_access=[] e transformava todo 200 legítimo em suspeita de vazamento (A4).
+    """
     if code >= 500:
         return "REVIEW", "5xx por input — validação não barrou antes do core"
     if injected and isinstance(injected, str) and injected in body:
         return "REVIEW", "payload refletido sem escape (possível XSS)"
-    allowed = category in DEFAULT_PERSONAS.get(persona, {}).get("expected_access", [])
+    if persona not in personas:
+        return "REVIEW", f"persona '{persona}' sem contrato de acesso — não dá para julgar"
+    allowed = category in personas.get(persona, {}).get("expected_access", [])
     if allowed and code in (401, 403):
         return "REVIEW", f"{persona} deveria acessar {category} mas levou {code}"
     if not allowed and code == 200:
@@ -121,6 +155,7 @@ def main():
     raw_fh = (out / "raw.jsonl").open("w")
     reviews, autos = [], 0
     tested_paths = set()
+    responded_paths = set()   # rota que deu QUALQUER resposta HTTP (mesmo 401/403/404 do servidor)
 
     for route in catalog:
         method, path = route["method"], route["path"]
@@ -132,7 +167,10 @@ def main():
             token = pdata.get("token")
             # 1) acesso "limpo": acessibilidade + isolamento
             code, body, ms = request(method, path, token=token)
-            verdict, why = classify(category, persona, code, body, None)
+            # code 0 = falha de conexão; 404 em TODAS as personas = rota que o servidor não tem.
+            if code not in (0, 404):
+                responded_paths.add((method, path))
+            verdict, why = classify(category, persona, code, body, None, personas)
             rec = {"route": f"{method} {path}", "category": category,
                    "persona": persona, "kind": "access", "code": code,
                    "ms": ms, "verdict": verdict, "why": why}
@@ -147,7 +185,7 @@ def main():
                         body_payload = p if isinstance(p, dict) else {"q": p}
                         code, body, ms = request(method, path, token=token, body=body_payload)
                         injected = p if isinstance(p, str) else None
-                        verdict, why = classify(category, persona, code, body, injected)
+                        verdict, why = classify(category, persona, code, body, injected, personas)
                         rec = {"route": f"{method} {path}", "category": category,
                                "persona": persona, "kind": f"inj:{inj_name}",
                                "code": code, "ms": ms, "verdict": verdict, "why": why}
@@ -156,11 +194,20 @@ def main():
                         autos += verdict == "AUTO"
     raw_fh.close()
 
-    # --- reconciliação de cobertura (§22.3 MUST) -----------------------------
+    # --- reconciliação de cobertura (MUST — schematize-qa · references/categorias.md) -----------------------------
     catalog_paths = {(r["method"], r["path"]) for r in catalog}
-    dead = sorted(catalog_paths - tested_paths)       # no catalog, não exercida
-    # rota fantasma exigiria descoberta em runtime; deixe o TODO abaixo.
-    ghost = []  # TODO: comparar rotas servidas (probe) com catalog_paths
+    not_exercised = sorted(catalog_paths - tested_paths)      # no catalog e nem chegou a ser chamada
+    # Rota MORTA: está no catalog, foi exercida e o servidor não a serve em nenhuma persona.
+    dead = sorted((catalog_paths & tested_paths) - responded_paths) + not_exercised
+    # Rota FANTASMA: servida pelo alvo e ausente do catalog. Sem fonte de descoberta NÃO existe
+    # reconciliação — e a ausência de dado passa a REPROVAR, nunca a dar cobertura total (A1).
+    served, served_origem = served_routes()
+    if served is None:
+        ghost = []
+        ghost_status = f"INDISPONIVEL — {served_origem}"
+    else:
+        ghost = sorted(served - catalog_paths)
+        ghost_status = f"reconciliado por {served_origem} ({len(served)} rotas servidas)"
 
     summary = {
         "started_at": ts,
@@ -169,6 +216,7 @@ def main():
         "routes_tested": len(tested_paths),
         "dead_routes": dead,
         "ghost_routes": ghost,
+        "ghost_reconciliation": ghost_status,
         "totals": {"auto": autos, "review": len(reviews)},
     }
     (out / "summary.json").write_text(json.dumps(summary, indent=2))
@@ -178,9 +226,13 @@ def main():
              f"- API: `{API_BASE}`",
              f"- Rotas no catalog: {len(catalog_paths)} · testadas: {len(tested_paths)}",
              f"- AUTO: {autos} · REVIEW: {len(reviews)}", ""]
+    lines += [f"- Reconciliação de rota fantasma: {ghost_status}", ""]
     if dead:
         lines += ["## Rotas mortas (no catalog, não responderam)", ""]
         lines += [f"- `{m} {p}`" for m, p in dead] + [""]
+    if ghost:
+        lines += ["## Rotas fantasma (servidas, fora do catalog)", ""]
+        lines += [f"- `{m} {p}`" for m, p in ghost] + [""]
     lines += ["## REVIEW (status inesperado — olho humano)", ""]
     if reviews:
         for r in reviews:
@@ -189,9 +241,13 @@ def main():
         lines.append("_nenhum — tudo AUTO._")
     (out / "report.md").write_text("\n".join(lines) + "\n")
 
-    full_coverage = (len(catalog_paths) > 0 and len(dead) == 0 and len(ghost) == 0)
+    # Cobertura TOTAL exige reconciliação FEITA. `served is None` (sem fonte) não pode virar
+    # "sem rota fantasma": era exatamente o verde vacuamente verdadeiro do A1.
+    full_coverage = (len(catalog_paths) > 0 and len(dead) == 0
+                     and served is not None and len(ghost) == 0)
     ok = (len(reviews) == 0) and full_coverage
     print(f"simulated: AUTO={autos} REVIEW={len(reviews)} "
+          f"dead={len(dead)} ghost={len(ghost)} ({ghost_status}) "
           f"cobertura={'total' if full_coverage else 'INCOMPLETA'} → {out}")
     sys.exit(0 if ok else 1)
 

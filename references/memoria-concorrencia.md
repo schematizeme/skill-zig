@@ -80,7 +80,7 @@ Provar **ausência de vazamento** é obrigatório, não opcional.
 **MUST**
 - **Todo teste que aloca usa `std.testing.allocator`** — ele **falha o teste** se sobrar
   memória ao final. Um `test` que aloca e passa com o testing allocator é prova de que o
-  par alloc/free está correto naquele caminho. Detalhe em `references/testes.md`.
+  par alloc/free está correto naquele caminho. Detalhe em `references/testes.md` (o recorte Zig) — a **disciplina** de teste é da `schematize-qa`, e a segurança ofensiva da `schematize-pentest`.
 - **Binário de longa duração usa `GeneralPurposeAllocator`** com `defer
   std.debug.assert(gpa.deinit() == .ok)` (ou log do relatório de leak) em debug — o
   `deinit()` do GPA **reporta leaks e double-frees**. Vazamento detectado é bug de

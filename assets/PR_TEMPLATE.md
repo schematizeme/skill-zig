@@ -5,7 +5,7 @@
 <motivação / ticket>
 
 ## Como testei
-- [ ] unit + integration passam, cobertura nos mínimos (§22)
+- [ ] unit + integration passam, cobertura nos mínimos (ver a `schematize-qa`)
 - [ ] smoke com asserção de conteúdo + self-check (sem "verde mentiroso")
 - [ ] simulated (rotas × personas) — cobertura total
 - [ ] pentest de entrada (tipo/sanitização/authz) limpo

@@ -1,4 +1,4 @@
-# schematize-zig — workflow de CI de referência (§13, §21, §22, §35).
+# schematize-zig — workflow de CI de referência (§13, §21, a `schematize-qa`, §35).
 # Copie para .github/workflows/ci.yml e ajuste <projeto>/comandos da sua stack.
 name: ci
 on:
@@ -14,10 +14,12 @@ jobs:
       - name: Gate de padrões (DoD/§37) no diff
         run: bash .claude/skills/schematize-zig/scripts/check-diff.sh "origin/${{ github.base_ref || 'main' }}"
       - name: Índice de microfunções atualizado (§39)
-        run: |
-          node .claude/skills/schematize-zig/scripts/build-index.mjs ./src > /tmp/idx.md || true
-          # compara com o commitado; descomente quando o índice estiver versionado:
-          # diff -q /tmp/idx.md <projeto>_archive/index/INDEX_FUNCTIONS.md
+        env:
+          # Sem estes dois o gate NAO roda — e nao rodar REPROVA. Gate desarmado em silencio
+          # ("|| true" + diff comentado) foi o achado A5 da vistoria de 2026-08-21.
+          INDEX_SRC: ${{ vars.INDEX_SRC || './src' }}
+          INDEX_FILE: ${{ vars.INDEX_FILE }}
+        run: bash .claude/skills/schematize-zig/scripts/check-index.sh
       - name: Scan de segredo no archive (§16.1/§32)
         run: bash .claude/skills/schematize-zig/scripts/archive-secret-scan.sh .
 
@@ -32,7 +34,7 @@ jobs:
         run: zig fmt --check .
       - name: Build (ReleaseSafe é o padrão de produção — memoria-concorrencia.md)
         run: zig build -Doptimize=ReleaseSafe
-      - name: Testes + leak gate (std.testing.allocator falha em vazamento — §22.0.1)
+      - name: Testes + leak gate (std.testing.allocator falha em vazamento — a `schematize-qa`.0.1)
         run: zig build test
       - name: Cross-compile de smoke (artefato estático — cadeia-suprimentos.md)
         run: zig build -Dtarget=x86_64-linux-musl
@@ -41,11 +43,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Smoke + security + authz + hardening (PR — §22.6)
+      - name: Smoke + security + authz + hardening (PR — a `schematize-qa` (gates de CI, `references/execucao.md` secao 6))
         run: |
           # <projeto> test smoke && <projeto> test security && <projeto> test authz && <projeto> test hardening
           echo "ligue ao CLI <projeto>_ops aqui"
-      - name: Smoke self-check (anti verde-mentiroso — §22.3)
+      - name: Smoke self-check (anti verde-mentiroso — a `schematize-qa` (smoke e matriz simulated, `references/categorias.md` secoes 5 e 10))
         run: bash .claude/skills/schematize-zig/scripts/smoke-selfcheck.sh --self-check
 
   security-scan:

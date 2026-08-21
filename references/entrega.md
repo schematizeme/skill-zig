@@ -82,8 +82,8 @@ Uma task está pronta quando, cumulativamente:
 
 - [ ] Testes passam (`zig build test`, unit + integration), cobertura nos mínimos
 - [ ] Caminhos críticos com testes explícitos
-- [ ] **Teste emulado por IA (`simulated`, §22.3) executado — 100% das rotas do inventário acessíveis pra quem deve e bloqueadas pra quem não deve; rota fantasma/morta = bloqueio**
-- [ ] **Pentest de entrada limpo: sem `500`, sem coerção de tipo, sem eco não-escapado, sem vazamento cross-tenant (§22.3, §22.8)**
+- [ ] **Teste emulado por IA (`simulated`, a `schematize-qa` (smoke e matriz simulated, `references/categorias.md` secoes 5 e 10)) executado — 100% das rotas do inventário acessíveis pra quem deve e bloqueadas pra quem não deve; rota fantasma/morta = bloqueio**
+- [ ] **Pentest de entrada limpo: sem `500`, sem coerção de tipo, sem eco não-escapado, sem vazamento cross-tenant (a `schematize-qa` (smoke e matriz simulated, `references/categorias.md` secoes 5 e 10), a `schematize-pentest`)**
 - [ ] `zig fmt --check` limpo, `zig build` sem warnings, security scan limpo
 - [ ] **Gate de vazamento verde: testes exercitam o caminho com `std.testing.allocator` (aborta em leak) e `defer`/`errdefer`/ownership conferidos — sem leak, sem double-free, sem use-after-free (`references/memoria-concorrencia.md`)**
 - [ ] **Nenhum item da §37 (anti-padrões vetados) presente no diff**
@@ -93,13 +93,15 @@ Uma task está pronta quando, cumulativamente:
 - [ ] OpenAPI atualizada (se for API)
 - [ ] Migration testada com rollback (se houver schema change)
 - [ ] Documentação atualizada (README, ADR, runbook se aplicável)
-- [ ] Smoke tests executados em staging **(com asserção de conteúdo e self-check anti verde-mentiroso — §22.3)**
+- [ ] Smoke tests executados em staging **(com asserção de conteúdo e self-check anti verde-mentiroso — a `schematize-qa` (smoke e matriz simulated, `references/categorias.md` secoes 5 e 10))**
 - [ ] CI verde, code review aprovado
 - [ ] **Archive de chat/task gerado e commitado (§28) — gate rígido, não opcional**
 - [ ] Feature flag configurada (se aplicável)
 - [ ] CODEOWNERS aplicável revisou
 
-> Os itens em negrito são **bloqueantes absolutos**: archive (§28), ausência de macaquice (§37), teste emulado por IA com rota 100% acessível (§22.3), e pentest de entrada limpo (§22.8). Faltando qualquer um, a task **não está pronta** — independente de todo o resto estar verde. Smoke verde não basta: tem que ser smoke que **prova** conteúdo, não só status.
+- [ ] **Nenhum efeito externo real fora de `prd` (se o projeto envia e-mail/SMS/push/webhook/cobrança):** provider default = **sink**, **guard deny-by-default dentro do provider** (com teste que **vê a recusa**), **cap por execução** válido em TODOS os ambientes, e endereços só no **domínio de teste em rota nula**. Normativa: `schematize-engineering` → `references/efeitos-externos.md`; recorte desta linguagem em `references/iam.md` §3.1; anti-padrão §37 *"Disparar efeito externo REAL a partir de não-produção"* (citado **por título**, porque a numeração do §37 diverge entre skills)
+
+> Os itens em negrito são **bloqueantes absolutos**: archive (§28), ausência de macaquice (§37), **nenhum efeito externo real fora de `prd`** (`schematize-engineering` → `references/efeitos-externos.md`), teste emulado por IA com rota 100% acessível (ver a `schematize-qa` (smoke e matriz simulated, `references/categorias.md` secoes 5 e 10)), e pentest de entrada limpo (ver a `schematize-pentest`). Faltando qualquer um, a task **não está pronta** — independente de todo o resto estar verde. Smoke verde não basta: tem que ser smoke que **prova** conteúdo, não só status.
 
 ---
 

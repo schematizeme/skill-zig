@@ -44,7 +44,7 @@
 - **Qualquer segredo no bundle que vai pro browser.** API key privada, secret de JWT, senha de banco, service-role key (Supabase/Firebase admin), token de provedor de pagamento, chave de terceiro — **nada** disso entra em código que o cliente baixa. O navegador não guarda segredo. Ponto.
 - Prefixar segredo com `NEXT_PUBLIC_` (ou equivalente `VITE_`, `REACT_APP_`, `PUBLIC_`). Esse prefixo **expõe a variável publicamente por definição** — usar só para valor que pode estar num outdoor.
 - Chamar API de terceiro com chave secreta **direto do browser**. Toda chamada que usa segredo passa por um **BFF / route handler / server action** server-side (§38).
-- Guardar token de sessão em `localStorage`/`sessionStorage`. Sessão vai em **cookie `HttpOnly` + `Secure` + `SameSite`** (§38, §22.3 hardening).
+- Guardar token de sessão em `localStorage`/`sessionStorage`. Sessão vai em **cookie `HttpOnly` + `Secure` + `SameSite`** (§38, a `schematize-qa` (smoke e matriz simulated, `references/categorias.md` secoes 5 e 10) hardening).
 - Confiar em validação de auth/role feita no client (`if (user.isAdmin)` no React) como controle de acesso. Isso é UX, não segurança — a decisão é **sempre server-side** (§15, §37).
 
 > "Coloca a senha no NextJS pra funcionar" não é uma solução, é um vazamento agendado. Se o cliente pode ver, o atacante já viu.
@@ -105,13 +105,13 @@
 - Sessão em **cookie `HttpOnly` + `Secure` + `SameSite=Lax|Strict`**. Token de auth **nunca** em `localStorage`/`sessionStorage` (XSS lê tudo lá).
 - Variáveis públicas (`NEXT_PUBLIC_*` etc.) contêm **apenas** dado não-sensível (URL de API pública, id de analytics público). Tratar esse prefixo como "vai pro outdoor".
 - Validação de input no client é **UX**; a validação que importa é a do servidor (§12). Autorização idem é server-side (§15).
-- CSP, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` e `frame-ancestors` configurados (§22.3 hardening).
+- CSP, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` e `frame-ancestors` configurados (a `schematize-qa` (smoke e matriz simulated, `references/categorias.md` secoes 5 e 10) hardening).
 - Chamada a API de terceiro com chave secreta passa por proxy server-side. O browser nunca segura a chave.
 
 **VETADO**
 - Service-role key / admin SDK (Supabase, Firebase, etc.) no código do client.
 - `dangerouslySetInnerHTML` com conteúdo não sanitizado (XSS).
-- Confiar em `redirect`/`next` param sem allowlist (open redirect — §22.3).
+- Confiar em `redirect`/`next` param sem allowlist (open redirect — a `schematize-qa` (smoke e matriz simulated, `references/categorias.md` secoes 5 e 10)).
 
 > "Bota a senha no NextJS" não existe como solução. Existe como CVE. O front pede ao servidor; o servidor guarda o segredo.
 

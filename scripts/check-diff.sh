@@ -4,7 +4,7 @@
 # Sai 1 se achar qualquer violação de PISO; imprime achados com arquivo:linha.
 #
 # Cobre o que dá pra checar por regex/contagem. O julgamento fino (semântica de
-# auth, coerção de tipo, etc.) fica pro /schematize-review com leitura humana/da IA.
+# auth, coerção de tipo, etc.) fica pro /zig-review com leitura humana/da IA.
 
 set -uo pipefail
 BASE="${1:-origin/main}"
@@ -42,14 +42,32 @@ for f in "${FILES[@]}"; do
 done
 
 # 2) §37 — macaquices grep-áveis (padrão -> mensagem)
-scan() { # scan "regex" "mensagem"
-  local re="$1" msg="$2" hit
+# scan "regex" "mensagem" [--perl]
+#   Roda a regex sobre os arquivos do diff e BLOQUEIA em cada acerto.
+#   O `|| true` de antes engolia o exit 2 do grep (regex invalida / erro de I/O) e transformava
+#   ERRO DE REGEX EM VERDE — foi assim que o piso de `<img>` sem alt ficou morto desde que existe
+#   (A3/A3b da vistoria de 2026-08-21). Agora: 0 = achou, 1 = nao achou, >=2 = ERRO, e erro FALHA.
+scan() {
+  local re="$1" msg="$2" flavor="${3:-ere}" hit rc
+  local -a gflags
+  case "$flavor" in
+    --perl|perl) gflags=(-nP) ;;
+    *)           gflags=(-nE) ;;
+  esac
   for f in "${FILES[@]}"; do
     [[ -f "$f" ]] || continue
-    hit=$(grep -nE "$re" "$f" 2>/dev/null || true)
-    [[ -n "$hit" ]] && while IFS= read -r l; do block "$f:${l%%:*} — $msg"; done <<< "$hit"
+    hit=$(grep "${gflags[@]}" "$re" "$f" 2>/dev/null); rc=$?
+    if (( rc >= 2 )); then
+      block "scripts/check-diff.sh — grep saiu $rc na regra '"'"'$msg'"'"' (regex invalida ou arquivo ilegivel): $re"
+      continue
+    fi
+    (( rc == 0 )) && while IFS= read -r l; do block "$f:${l%%:*} — $msg"; done <<< "$hit"
   done
 }
+
+# has_perl_grep — `grep -P` existe nesta maquina? Sem ele, regra que exige lookahead NAO roda
+# em silencio; entao a ausencia vira BLOQUEIO explicito, nao um verde a menos.
+has_perl_grep() { echo x | grep -qP x 2>/dev/null; }
 scan 'NEXT_PUBLIC_[A-Z_]*(SECRET|KEY|TOKEN|PASSWORD|PRIVATE)' 'segredo exposto via NEXT_PUBLIC_ (§13.4/§37)'
 scan 'rejectUnauthorized:\s*false|InsecureSkipVerify:\s*true|verify\s*=\s*False' 'verificação TLS desabilitada (§37)'
 scan 'Math\.random\(\).*(token|secret|session|nonce|reset)' 'Math.random em contexto de segredo — use CSPRNG (§14/§37)'

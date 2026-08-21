@@ -1,5 +1,16 @@
 # Filosofia, Aplicação Universal e Anti-Padrões Vetados
 
+> **CITE ESTES ITENS PELO TÍTULO, NUNCA PELO NÚMERO.** A numeração é **local desta skill** e
+> **diverge entre as irmãs**: o mesmo `§37 item 45` é *"authz hand-rolled"* aqui, *"bloquear o
+> scheduler da BEAM"* na `schematize-elixir` e *"dois serviços no mesmo user Linux"* na
+> `schematize-ruby`; o item 49 é *"efeito externo real fora de prd"* na base, não existe em três
+> skills e é *"ReleaseFast sem profiling"* na `schematize-zig`. Os máximos vão de 46 a 53. Um
+> ponteiro `§37 item N` cruzando skills aponta para outra coisa — e um dentro da própria skill
+> apodrece assim que alguém insere um item no meio (foi o que aconteceu com a citação a *"item 48"*
+> em `references/iam.md`, quando esta lista terminava no 46). **Forma correta:** §37, *"<título do
+> item>"*.
+
+
 > Parte da skill **schematize-zig**. As referências cruzadas (§N) apontam para seções do corpo completo — todas presentes no conjunto de references desta skill.
 
 ## Índice
@@ -106,10 +117,10 @@ Prioridades, em ordem de desempate:
 ### CORS, headers e superfície
 
 12. **`Access-Control-Allow-Origin: *` em rota autenticada** (pior ainda com `allow-credentials`).
-    → Allowlist explícita de origens (§22.3 hardening).
+    → Allowlist explícita de origens (a `schematize-qa` (smoke e matriz simulated, `references/categorias.md` secoes 5 e 10) hardening).
 
 13. **Endpoint de debug/admin/management sem auth, ou bind em `0.0.0.0`** expondo porta interna.
-    → Bind restrito, auth obrigatória, `/debug` e `/actuator` retornam 404 externamente (§22.3).
+    → Bind restrito, auth obrigatória, `/debug` e `/actuator` retornam 404 externamente (ver a `schematize-qa` (smoke e matriz simulated, `references/categorias.md` secoes 5 e 10)).
 
 14. **Mass assignment** — dar bind do body inteiro direto na entidade, deixando passar `is_admin`, `tenant_id`, `created_at`, `password_hash`.
     → Allowlist explícita de campos aceitos por endpoint.
@@ -128,10 +139,10 @@ Prioridades, em ordem de desempate:
 ### Testes e cobertura
 
 18. **Pular/comentar teste pra passar o CI** — comentar o bloco `test "..."`, remover o `try std.testing.expect(...)`, marcar `if (true) return error.SkipZigTest` sem motivo real.
-    → Conserta o código, não silencia o teste (`references/testes-execucao.md`).
+    → Conserta o código, não silencia o teste (`schematize-qa`).
 
 19. **Baixar o threshold de cobertura ou editar o gate** pra o número fechar.
-    → Cobertura é contrato (§22). Sobe escrevendo teste, não mexendo na régua.
+    → Cobertura é contrato (ver a `schematize-qa`). Sobe escrevendo teste, não mexendo na régua.
 
 20. **Mockar o próprio sistema sob teste** retornando sucesso fixo, dando "verde" falso.
     → Testar comportamento real; mock só nas bordas externas.
@@ -216,7 +227,7 @@ Prioridades, em ordem de desempate:
     → **`try`** pra propagar, **`catch |err| { ...trata, loga com trace_id, degrada... }`** pra tratar, **`errdefer`** pra desfazer o já-alocado no caminho de erro. `unreachable` só onde é **provadamente** inalcançável — nunca como atalho pra não tratar (§18, `references/memoria-concorrencia.md`).
 
 48. **Vazamento de memória** — alocar sem `defer alloc.free(...)` / sem um caminho de free casado, perder o ponteiro no caminho de erro (sem `errdefer`), ou **não testar com o allocator que detecta leak**. **VETADO alocador global escondido** (estado alocado por baixo dos panos que ninguém libera).
-    → Todo `alloc` tem seu `defer free` / `deinit` casado; erro no meio → `errdefer`. **Testar com `std.testing.allocator` / `GeneralPurposeAllocator`** que **falha o teste em leak** — leak detectado é bug, não warning. Ownership documentado no doc-comment `///` (quem aloca, quem libera). (`references/memoria-concorrencia.md`, `references/testes-execucao.md`).
+    → Todo `alloc` tem seu `defer free` / `deinit` casado; erro no meio → `errdefer`. **Testar com `std.testing.allocator` / `GeneralPurposeAllocator`** que **falha o teste em leak** — leak detectado é bug, não warning. Ownership documentado no doc-comment `///` (quem aloca, quem libera). (`references/memoria-concorrencia.md`, a `schematize-qa`).
 
 49. **Rodar produção em `ReleaseFast` sem profiling que justifique** — `ReleaseFast` desliga checagem de bounds e de overflow: acesso fora de faixa e overflow viram **UB (undefined behavior)** silencioso, não crash controlado.
     → **Default seguro é `ReleaseSafe`** (mantém as checagens). Só troque pra `ReleaseFast` num caminho quente com **profiling que prove o ganho** e ADR registrando o trade-off. Segurança de memória não se troca por microssegundo sem evidência (§13).
@@ -229,6 +240,13 @@ Prioridades, em ordem de desempate:
 
 52. **Não fixar a versão exata do compilador Zig.** Zig é **pre-1.0**: há breaking changes entre versões, e um `.zig` que compila em uma versão quebra na seguinte. Deixar a versão "flutuar" = build irreprodutível e drift entre dev/CI/prd.
     → **Pin exato** da versão do compilador (Anexo A / `references/stack-versoes.md`), usada igual em dev, CI e prd; upgrade é mudança deliberada com ADR e teste, nunca implícita.
+
+
+### Efeitos externos (e-mail, SMS, push, webhook, cobrança)
+
+53. **Mandar de verdade fora de produção** — cliente SMTP/HTTP do provedor ligado por default em dev/hml, `@gmail.com` (ou o seu e-mail) em fixture/seed/persona, laço de teste criando N contas com **Email OTP always-on** e nenhum contador no caminho.
+    → **Provider por ambiente** (vtable `Mailer` com `SinkMailer` fora de `prd`), **guard dentro do provider** (`error.ExternalRecipientBlocked`, fail-closed quando a config falta), **cap por execução** com `@atomicRmw` (`MAIL_MAX_PER_RUN`) válido em TODOS os ambientes — inclusive `prd`, onde ele conta e audita —, e endereço sintético só em `test.<domain>` com **null MX** (`references/iam.md` §3.1; normativa em `schematize-engineering` → `references/efeitos-externos.md`). Bounce/complaint em massa **queima IP e domínio** e derruba o e-mail transacional de **produção** — inclusive o **OTP de login** —, com semanas de warm-up e utilidade zero. Não tem undo.
+    *(Cite este anti-padrão **pelo título**, nunca por número: o mesmo `§37 item N` significa coisas diferentes em cada skill — ver a nota de numeração no topo.)*
 
 > Regra de bolso: se a justificativa começa com "só pra funcionar", "depois eu arrumo", ou "é mais rápido assim" e o resultado mexe em segredo, auth, dado, registro, **memória (leak/UB), erro engolido, ou toca o servidor por fora do fluxo/ops** — **provavelmente é uma macaquice desta lista. Para e faz certo.**
 

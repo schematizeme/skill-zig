@@ -88,9 +88,9 @@ Lista completa com veto + caminho certo: ver `references/anti-padroes.md` (§37)
 ## Definition of Done
 
 Nada é "pronto" sem: testes + cobertura mínima, simulated com cobertura total,
-pentest de entrada limpo, nenhum anti-padrão da §37, observabilidade, OpenAPI
+pentest de entrada limpo, **nenhum efeito externo real fora de `prd`** (piso do e-mail/SMS/push: sink por default, guard deny-by-default no provider, cap por execução, domínio de teste em rota nula — gate em `scripts/check-external-effects.sh`), nenhum anti-padrão da §37, observabilidade, OpenAPI
 atualizada (se API), migration com rollback (se schema), **archive commitado**,
-CI verde e review aprovado. Detalhe na skill, `references/operacao.md` (§35).
+CI verde e review aprovado. Detalhe na skill, `references/entrega.md` (§35).
 
 ## Qualidade de código e índice (sempre)
 

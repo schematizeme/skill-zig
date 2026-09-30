@@ -3,6 +3,16 @@
 Todas as mudanças relevantes deste pacote, no formato [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 com versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
+## [0.4.0] — 2026-09-30
+Regra nova do dono: **orquestração por papéis e escada de modelo**. Por quê (pedido do dono, custo): o orquestrador em modelo padrão não desenvolve; ações onerosas viram micro-tasks baratas; `sonnet` é o default nos subagents e `opus` só após falha.
+
+### Adicionado
+- **`assets/CLAUDE.md`**: novo piso 18 — *Orquestrador não desenvolve; subagent barato executa*: o principal só planeja, decompõe, despacha, supervisiona e revisa; micro-tasks; `sonnet` por padrão, escada de correção (mesmo subagent, até 2 rodadas → re-decompor → `opus` com motivo registrado); no overdev cada item é executado por subagent `sonnet` e revisado pelo principal. Remete à `schematize-engineering` -> `references/orquestracao.md` §9.
+- **`SKILL.md`**: bullet correspondente na seção de pisos.
+
+### Mantido (piso inalterado)
+- Todos os pisos anteriores (segurança, IAM, testes de verdade, efeito externo fora de prd, ops/DoD/archive) permanecem exatamente como estavam; a regra só define **quem executa**, não afrouxa nenhum gate.
+
 ## [0.3.0] — 2026-08-21
 Saneamento do catálogo conforme a vistoria de 2026-08-21.
 

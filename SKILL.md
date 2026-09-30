@@ -1,7 +1,7 @@
 ---
 name: schematize-zig
 metadata:
-  version: 0.3.0
+  version: 0.4.0
 description: Padrões normativos de engenharia da casa no recorte Zig — baixo nível, interop C, controle de memória explícito — cobrindo arquitetura, alocadores e detecção de leak, concorrência, segurança, IAM, testes/pentest, dados, observabilidade, build/deploy e archive. Use SEMPRE que for projetar, gerar, revisar ou refatorar serviço, biblioteca, binding C, parser, build.zig, teste ou deploy em Zig — mesmo sem citar "padrão" —, e ao escolher stack (Zig entra por fit + ADR no rol Go/Rust/Elixir/C#/Zig/Ruby), desenhar auth, configurar observabilidade ou produzir ADR/runbook/archive. Pisos: segredo nunca no cliente; erro nunca engolido (`catch {}`/`catch unreachable` vetados); todo alocador testado contra leak com `std.testing.allocator`; auth server-side; IAM como app separada; efeito externo NUNCA sai de não-produção — sink por default, guard deny-by-default, cap por execução (atômico, válido também em prd), domínio de teste em rota nula; archive obrigatório. Pentest na schematize-pentest.
 ---
 
@@ -9,7 +9,7 @@ description: Padrões normativos de engenharia da casa no recorte Zig — baixo 
 
 Conjunto normativo que rege como software de sistema é projetado, construído, testado e operado aqui **com Zig como linguagem**. Mesma base normativa das demais skills da casa; o que muda é o idioma, o build (`zig build`), o gerenciamento de memória (manual, por **allocators**, sem GC), o modelo de erro (**error unions** `!T`), a interop com C e o ecossistema.
 
-**Versão:** skill `schematize-zig` v0.3.0. Changelog em `CHANGELOG.md`.
+**Versão:** skill `schematize-zig` v0.4.0. Changelog em `CHANGELOG.md`.
 
 ## Zig no rol sancionado (fit, não gosto)
 

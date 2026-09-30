@@ -1,0 +1,13 @@
+slug = "zig"
+name = "schematize-zig"
+tag = "Sistemas · Zig"
+status = "beta"
+order = 10
+current_version = "0.4.0"
+requires = ["engineering"]   # o piso vem da base; esta skill so especializa (SKILL.md, "Precedencia e heranca")
+href = "/zig"
+
+[descriptions]
+pt = "Padrões normativos de engenharia para sistemas em Zig — baixo nível, performance e controle manual de memória."
+en = "Normative engineering standards for systems in Zig — low-level, performance and manual memory control."
+es = "Estándares normativos de ingeniería para sistemas en Zig — bajo nivel, rendimiento y control manual de memoria."

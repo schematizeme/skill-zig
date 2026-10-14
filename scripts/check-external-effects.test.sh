@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# herdado de schematize-engineering — não edite aqui (fonte: skill-engineering/scripts/check-external-effects.test.sh; regenere: node tools/sync-herdados.mjs)
 # check-external-effects.test.sh — o VERMELHO VISTO do gate de efeito externo.
 #
 # Motivo: o gate existia em UM lugar (schematize-engineering) e NUNCA tinha reprovado de proposito.

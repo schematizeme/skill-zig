@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# herdado de schematize-engineering — não edite aqui (fonte: skill-engineering/scripts/check-external-effects.sh; regenere: node tools/sync-herdados.mjs)
 # check-external-effects.sh — gate determinístico do piso "efeito externo NUNCA sai de
 # não-produção" (SKILL.md; normativa em `schematize-engineering` -> references/efeitos-externos.md;
 # anti-padrão §37 "Disparar efeito externo REAL a partir de não-produção" — citado por TÍTULO,

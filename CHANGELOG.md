@@ -17,6 +17,9 @@ Saneamento transversal das skills de linguagem (coerência com a base e fatos ve
 - **Description** reduzida (~270 chars) para caber no orçamento de listagem (soma das 31 skills ≤ 8500; o Claude Code corta a listagem acima disso).
 - **CI:** actions de terceiros pinadas por SHA completo com comentário `# vX.Y.Z` (mesma major em uso; supply chain), mesmo SHA em todas as skills.
 
+### Alterado
+- Herdados parametrizados da base (`schematize-engineering` → `assets/herdados/`): os blocos "Precedência e herança", "Fluxo de ambientes e ops", "Deploy destrutivo", "Efeito externo" e "IAM por desenho" passam a ser gerados por `tools/sync-herdados.mjs` (lead específico de cada linguagem fica fora do bloco); `references/contexto-claude-code.md` e `scripts/check-external-effects{,.test}.sh` viram arquivos herdados (convenção do archive corrigida para `<projeto>/<projeto>_archive`; só a engineering é dona do handoff). A frase do step-up (senha + Email OTP = 2FA baseline, AAL alto só por rota sensível) vira regra comum do IAM.
+
 ## [0.4.2] — 2026-09-30
 O piso de orquestração passa a ser **herdado** da base em vez de copiado à mão: uma mudança na engineering não exige mais editar 38 arquivos.
 

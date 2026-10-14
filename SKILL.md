@@ -2,7 +2,8 @@
 name: schematize-zig
 metadata:
   version: 0.4.2
-description: Padrões normativos de engenharia da casa no recorte Zig — baixo nível, interop C, controle de memória explícito — cobrindo arquitetura, alocadores e detecção de leak, concorrência, segurança, IAM, testes/pentest, dados, observabilidade, build/deploy e archive. Use SEMPRE que for projetar, gerar, revisar ou refatorar serviço, biblioteca, binding C, parser, build.zig, teste ou deploy em Zig — mesmo sem citar "padrão" —, e ao escolher stack (Zig entra por fit + ADR no rol Go/Rust/Elixir/C#/Zig/Ruby), desenhar auth, configurar observabilidade ou produzir ADR/runbook/archive. Pisos: segredo nunca no cliente; erro nunca engolido (`catch {}`/`catch unreachable` vetados); todo alocador testado contra leak com `std.testing.allocator`; auth server-side; IAM como app separada; efeito externo NUNCA sai de não-produção — sink por default, guard deny-by-default, cap por execução (atômico, válido também em prd), domínio de teste em rota nula; archive obrigatório. Pentest na schematize-pentest.
+description: >-
+  Padrões de engenharia da casa para Zig: baixo nível, interop C, alocadores explícitos. Use ao projetar, gerar, revisar ou refatorar serviço, biblioteca, binding C, parser ou deploy em projeto com build.zig/build.zig.zon/*.zig, ou ao escolher Zig no rol (fit + ADR). Mantém os pisos de segurança, IAM, leak-test e archive da base.
 ---
 
 # Padrões de Engenharia da Casa — Zig
@@ -56,6 +57,8 @@ Digite `/zig-help` pra ver todos. Em resumo:
 | Comando | O que faz |
 |---|---|
 | `/zig-help` | lista todos os comandos do schematize-zig |
+| `/zig-load` | carrega à força TODO o corpo normativo no contexto e passa a aplicá-lo como regra inegociável |
+| `/zig-claude` | cria ou **atualiza (sobrescreve)** o `CLAUDE.md` da raiz com a versão atual da skill (backup se houver customização) |
 | `/zig-cc` | context compact: gera context.md + checklist.md no archive e roda `/compact` |
 | `/zig-handoff` | gera o handoff (context.md + checklist.md) **sem** compactar — pra fim de sessão |
 | `/zig-qa` | Q.A. no contexto Zig — wrapper fino da **schematize-qa** (`/qa-plan` → `/qa-run`) com `zig test`/`zig build test` |
@@ -99,7 +102,7 @@ Nunca violados, nem "pra funcionar", nem "pra ir mais rápido". Lista completa e
 - **Segredo nunca no cliente.** Nada de API key, secret de JWT, senha de banco ou token em bundle do browser nem em `NEXT_PUBLIC_*`/`VITE_*`. Nada de segredo embutido no binário (`@embedFile` de config sensível) ou na fonte. Segredo só server-side. Detalhe em `references/seguranca.md`.
 - **SQL sempre parametrizado.** Zig não tem `format!`, mas montar query com `std.fmt.allocPrint`/concatenação é o mesmo pecado — injeção esperando acontecer. Use driver com binds parametrizados (ou `libpq`/`PQexecParams` via `@cImport`).
 - **Auth e autorização server-side.** `tenant_id`/role/`user_id` vêm do token verificado, nunca do body/header do cliente.
-- **JWT validado por inteiro** (assinatura, exp, aud, iss, alg em allowlist). Senha em argon2id (ou bcrypt cost ≥ 12). Token de sessão por CSPRNG (**`io.random`** / `io.randomSecure` — ✔ 0.16.0), nunca PRNG previsível.
+- **JWT validado por inteiro** (assinatura, exp, aud, iss, alg em allowlist). Senha: argon2id-only para senha nova (bcrypt/PBKDF2 só legado a migrar no próximo login); parâmetros em `schematize-engineering → references/iam.md` §2.1. Token de sessão por CSPRNG (**`io.random`** / `io.randomSecure` — ✔ 0.16.0), nunca PRNG previsível.
 - **Erro nunca engolido.** Sem `_ = foo()` descartando um error union, sem `catch unreachable`/`catch @panic(...)`/`catch {}` em caminho de produção pra calar o compilador; trate `!T`/`?T` de verdade (`try`, `catch |err| {...}`, `errdefer`, `orelse`).
 - **Memória sem vazamento (piso Zig).** Todo `alloc` tem **caminho de `free` casado** (`defer alloc.free(...)` / `errdefer` no erro); **todo teste roda com o allocator que detecta leak** (`std.testing.allocator`; `std.heap.DebugAllocator` com `.deinit()` que reporta em debug). Vazar memória é bug de entrega, não detalhe. Detalhe em `references/memoria-concorrencia.md`.
 - **Build mode seguro.** Produção exposta a input hostil roda em **`ReleaseSafe`** (bounds check + trap de overflow) salvo perfil que justifique `ReleaseFast`/`ReleaseSmall` em ADR — sem as checagens, use-after-free/OOB viram UB explorável. Detalhe em `references/seguranca.md`.

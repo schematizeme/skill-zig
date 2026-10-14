@@ -45,7 +45,7 @@ Versões concretas de stacks (inclusive a versão exata do compilador Zig) ficam
    → Toda decisão de acesso é **server-side** (§15). Front é UX, não controle.
 
 10. **Hash de senha fraco** — MD5, SHA1, sem salt, ou plaintext.
-    → argon2id (ou bcrypt cost ≥ 12) via lib criptográfica revisada (§14).
+    → argon2id-only (bcrypt/PBKDF2 só legado a migrar no próximo login) via lib criptográfica revisada (§14).
 
 11. **Rand não-cripto pra token, id de sessão, código de reset, nonce** (`std.rand.DefaultPrng` / RNG sem seed cripto).
     → CSPRNG: **`io.random`** (ou `io.randomSecure` para material de vida longa) — ✔ 0.16.0; `std.crypto.random` saiu, e o "conserto" tentador (`std.Random.DefaultPrng`) é o Xoshiro previsível (§14).

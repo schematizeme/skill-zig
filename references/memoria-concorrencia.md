@@ -29,7 +29,7 @@ mágico: a alocação é sempre visível na assinatura e no fluxo.
   um global escondido. Isso deixa o chamador dono da política de memória (arena por
   requisição, pool, buffer fixo).
 - **Escolha o allocator pelo caso:**
-  - **`DebugAllocator` (o antigo `GeneralPurposeAllocator`, renomeado no 0.16)** — de propósito geral em debug/dev, com
+  - **`DebugAllocator` (o antigo `GeneralPurposeAllocator`, renomeado no 0.14)** — de propósito geral em debug/dev, com
     **detecção de leak e de double-free**. Padrão em binário de longa duração.
   - **`ArenaAllocator`** — alocações de vida curta e mesmo escopo (uma requisição, um
     parse) liberadas **todas de uma vez** (`arena.deinit()`). Reduz o risco de free
@@ -81,7 +81,7 @@ Provar **ausência de vazamento** é obrigatório, não opcional.
 - **Todo teste que aloca usa `std.testing.allocator`** — ele **falha o teste** se sobrar
   memória ao final. Um `test` que aloca e passa com o testing allocator é prova de que o
   par alloc/free está correto naquele caminho. Detalhe em `references/testes.md` (o recorte Zig) — a **disciplina** de teste é da `schematize-qa`, e a segurança ofensiva da `schematize-pentest`.
-- **Binário de longa duração usa `DebugAllocator`** (✔ 0.16.0; era `GeneralPurposeAllocator`) com `defer
+- **Binário de longa duração usa `DebugAllocator`** (renomeado no 0.14; era `GeneralPurposeAllocator`) com `defer
   std.debug.assert(gpa.deinit() == .ok)` (ou log do relatório de leak) em debug — o
   `deinit()` do GPA **reporta leaks e double-frees**. Vazamento detectado é bug de
   entrega, entra na DoD (`references/entrega.md` §35).

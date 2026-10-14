@@ -25,8 +25,8 @@ A casa **não tem "a linguagem única"**; tem **o rol sancionado** e um **guia d
 
 | Linguagem | Skill | Sufixo de repo | Fit — quando escolher |
 |---|---|---|---|
-| **Go** | `schematize-go` | `_go` | Serviços de rede/API concorrentes, CLIs, tooling. **Default pragmático.** |
-| **Rust** | `schematize-rust` | `_rs` | Correção/segurança de memória crítica, auth, cripto, parsing hostil. **Default quando errar é caro.** |
+| **Go** | `schematize-go` | `_go` | Serviços de rede/API concorrentes, CLIs, tooling. |
+| **Rust** | `schematize-rust` | `_rs` | Correção/segurança de memória crítica, auth, cripto, parsing hostil. |
 | **Elixir** | `schematize-elixir` | `_ex` | Realtime, alta concorrência tolerante a falha (BEAM/OTP), pub-sub. |
 | **C#** (.NET) | `schematize-csharp` | `_cs` | Ecossistema .NET/enterprise, integração Microsoft, ASP.NET/EF Core. |
 | **Zig** | `schematize-zig` | `_zig` | **Baixo nível e performance máxima, controle explícito de memória, embedded, interop com C, artefatos pequenos, tooling de sistema.** |
@@ -40,7 +40,7 @@ A casa **não tem "a linguagem única"**; tem **o rol sancionado** e um **guia d
 
 - Versão exata do compilador Zig em uso fica no Anexo A / `references/stack-versoes.md` (Zig é pre-1.0 — breaking entre versões; fixar a versão é piso).
 
-- **Regra de fit:** auth/cripto pede **Rust**; gateway realtime pede **Elixir**; job de rede simples pede **Go**; utilitário de sistema / interop C / artefato pequeno pede **Zig**; integração .NET pede **C#**; script/protótipo pede **Ruby**. **Empatou?** Use o **default pragmático (Go)** e registre o porquê no ADR — não puxe Zig por gosto.
+- **Regra de fit:** auth/cripto pede **Rust**; gateway realtime pede **Elixir**; job de rede simples pede **Go**; utilitário de sistema / interop C / artefato pequeno pede **Zig**; integração .NET pede **C#**; script/protótipo pede **Ruby**. **Empatou?** Empate técnico: desempate pragmático em `schematize-engineering → references/linguagens.md`; registre o porquê no ADR. Não puxe Zig por gosto.
 
 - Frameworks são bem-vindos; abstrações mágicas não. Critério: consigo entender o stack trace? (Em Zig, `comptime` é força, não desculpa pra metaprogramação ilegível — ver `anti-padroes.md`.)
 

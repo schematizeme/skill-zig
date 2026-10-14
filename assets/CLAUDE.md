@@ -22,7 +22,7 @@ antes de produzir código ou decisão — não trabalhe de memória.
 2. **SQL sempre parametrizado** — concatenar string em query é proibido.
 3. **Auth e autorização server-side.** `tenant_id`/role/`user_id` vêm do token
    verificado, nunca do cliente. JWT validado por inteiro (assinatura, exp, aud,
-   iss, alg em allowlist). Senha em argon2id (ou bcrypt cost ≥ 12). Token/sessão por
+   iss, alg em allowlist). Senha em argon2id-only (bcrypt/PBKDF2 só legado a migrar; `schematize-engineering → references/iam.md` §2.1). Token/sessão por
    CSPRNG (**`io.random`** / `io.randomSecure` — ✔ 0.16.0), nunca PRNG previsível (`DefaultPrng` compila e é Xoshiro).
 4. **Erro nunca engolido.** Sem `_ = foo()` descartando um error union, sem
    `catch unreachable`/`catch @panic(...)`/`catch {}` em caminho de produção pra

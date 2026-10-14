@@ -3,6 +3,18 @@
 Todas as mudanças relevantes deste pacote, no formato [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 com versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
+## [0.5.0] — 2026-10-14
+Saneamento transversal das skills de linguagem (coerência com a base e fatos verificados).
+
+### Corrigido
+- `description` reescrita (<=350, ancorada em build.zig) em bloco `>-`.
+- Hash de senha: argon2id-only para senha nova; bcrypt/PBKDF2 só legado a migrar no próximo login, com ponteiro para `schematize-engineering → references/iam.md` (a skill aceitava alternativa fraca em SKILL.md/CLAUDE.md/anti-padrões).
+- CI: `trivy-action@master` pinado por SHA (v0.36.0), pois ref móvel em gate de segurança é supply chain aberta.
+- `seguranca.md`: CSPRNG alinhado a `io.random`/`io.randomSecure` (mandava `std.crypto.random`/`std.Random`, que não existe mais/é previsível, contra o resto da skill).
+- `memoria-concorrencia.md`: rename `GeneralPurposeAllocator`→`DebugAllocator` atribuído ao 0.14 (era 0.16; verificado nos commits do Zig).
+- Tabela de comandos do SKILL.md ganha `/zig-load` e `/zig-claude`.
+- 'Default pragmático (Go)' trocado por ponteiro para a base; `seguranca.md` não anuncia mais 'Frontend'.
+
 ## [0.4.2] — 2026-09-30
 O piso de orquestração passa a ser **herdado** da base em vez de copiado à mão: uma mudança na engineering não exige mais editar 38 arquivos.
 

@@ -1,4 +1,4 @@
-# Segurança, Auth, Multi-tenancy, LGPD e Frontend
+# Segurança, Auth, Multi-tenancy, LGPD e Segredos no Cliente
 
 
 > **PONTEIRO, não cópia.** A normativa deste tema é da base: **`schematize-engineering`** →
@@ -21,7 +21,7 @@
 
 ## 14. Autenticação e Autorização
 
-- Tokens, ids de sessão e códigos de reset gerados por **CSPRNG** — em Zig, `std.crypto.random` / `std.Random` de fonte segura (§Z.6); nunca PRNG previsível nem `Math.random()` do cliente (§37).
+- Tokens, ids de sessão e códigos de reset gerados por **CSPRNG** — em Zig, `io.random` / `io.randomSecure` (§Z.6; `std.crypto.random` não existe mais e `std.Random.DefaultPrng` é previsível); nunca PRNG previsível nem `Math.random()` do cliente (§37).
 
 ## 38. Frontend / NextJS / SPA — Regras Específicas
 
@@ -189,7 +189,7 @@ bounds check, não há trap de overflow, não há `error` — a memória é terr
 - **SHOULD:** o ecossistema Zig ainda é **jovem** — ao sair do `std.crypto`, prefira lib C
   madura e auditada (ex.: libsodium/BoringSSL via `@cImport`, com o boundary validado de
   §Z.4) a implementação artesanal Zig não revisada. Para **hash de senha**, use **argon2id**
-  (ou bcrypt cost ≥ 12) de `std.crypto` quando disponível, ou lib C revisada por `@cImport` —
+  (argon2id-only; bcrypt/PBKDF2 só legado a migrar) de `std.crypto` quando disponível, ou lib C revisada por `@cImport` —
   ver `references/iam.md`.
 
 - **MUST:** comparação de segredo (MAC, hash, OTP) em **tempo constante** —

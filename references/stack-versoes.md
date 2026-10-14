@@ -37,7 +37,7 @@ do rol. Escolha Zig por **encaixe com o problema**, registrado em **ADR** (§27)
 - **Regra de fit:** um utilitário de sistema / componente de interop C / artefato
   pequeno pede **Zig**; auth/cripto pede **Rust**; job de rede simples pede **Go**;
   realtime pede **Elixir**; integração .NET pede **C#**; protótipo pede **Ruby**. Em
-  empate técnico, use o **default pragmático (Go)** e registre o porquê no ADR.
+  empate técnico, siga o desempate pragmático em `schematize-engineering → references/linguagens.md`; registre o porquê no ADR.
 
 > Zig **não** é o default de tudo. É a escolha certa para o recorte de sistema/interop/
 > performance com memória manual. Fora desse recorte, prefira a linguagem que o fit

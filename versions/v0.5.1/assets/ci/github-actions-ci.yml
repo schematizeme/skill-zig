@@ -1,0 +1,61 @@
+# schematize-zig — workflow de CI de referência (§13, §21, a `schematize-qa`, §35).
+# Copie para .github/workflows/ci.yml e ajuste <projeto>/comandos da sua stack.
+name: ci
+on:
+  pull_request:
+  push: { branches: [main] }
+
+jobs:
+  standards-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with: { fetch-depth: 0 }
+      - name: Gate de padrões (DoD/§37) no diff
+        run: bash .claude/skills/schematize-zig/scripts/check-diff.sh "origin/${{ github.base_ref || 'main' }}"
+      - name: Índice de microfunções atualizado (§39)
+        env:
+          # Sem estes dois o gate NAO roda — e nao rodar REPROVA. Gate desarmado em silencio
+          # ("|| true" + diff comentado) foi o achado A5 da vistoria de 2026-08-21.
+          INDEX_SRC: ${{ vars.INDEX_SRC || './src' }}
+          INDEX_FILE: ${{ vars.INDEX_FILE }}
+        run: bash .claude/skills/schematize-zig/scripts/check-index.sh
+      - name: Scan de segredo no archive (§16.1/§32)
+        run: bash .claude/skills/schematize-zig/scripts/archive-secret-scan.sh .
+
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      # Zig é pre-1.0: fixe a versão EXATA (stack-versoes.md). Ajuste a versão pinada.
+      - uses: mlugg/setup-zig@53fc45b17fe98b52f92ee5ea08ff48a85a3e7eb7 # v1.2.2
+        with: { version: 0.14.0 }
+      - name: Formatação canônica (trava)
+        run: zig fmt --check .
+      - name: Build (ReleaseSafe é o padrão de produção — memoria-concorrencia.md)
+        run: zig build -Doptimize=ReleaseSafe
+      - name: Testes + leak gate (std.testing.allocator falha em vazamento — a `schematize-qa`.0.1)
+        run: zig build test
+      - name: Cross-compile de smoke (artefato estático — cadeia-suprimentos.md)
+        run: zig build -Dtarget=x86_64-linux-musl
+
+  test-kit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - name: Smoke + security + authz + hardening (PR — a `schematize-qa` (gates de CI, `references/execucao.md` secao 6))
+        run: |
+          # <projeto> test smoke && <projeto> test security && <projeto> test authz && <projeto> test hardening
+          echo "ligue ao CLI <projeto>_ops aqui"
+      - name: Smoke self-check (anti verde-mentiroso — a `schematize-qa` (smoke e matriz simulated, `references/categorias.md` secoes 5 e 10))
+        run: bash .claude/skills/schematize-zig/scripts/smoke-selfcheck.sh --self-check
+
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - name: Trivy fs
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with: { scan-type: fs, severity: HIGH,CRITICAL, exit-code: '1' }
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9

@@ -7,6 +7,7 @@ com versionamento [SemVer](https://semver.org/lang/pt-BR/).
 Observabilidade deixa de duplicar a skill dona do tema.
 
 ### Alterado
+- Description reduzida (≤235 chars) para caber no orçamento de listagem de skills (soma ≤8300); mesmo território, fronteiras com as irmãs preservadas.
 - `references/observabilidade.md` reduzido ao específico da linguagem, com ponteiro `schematize-observability -> references/...` para o padrão (OTel, Collector, SLO, alertas, healthchecks, stack): o arquivo repetia o que a skill dona do tema passou a ter, e a cópia deriva. Fica o Zig: `std.log` com scopes e `logFn` JSON, `/metrics`, o gap do OTel nativo (rotas a/b/c), profiling com símbolos nativos.
 
 ### Alterado

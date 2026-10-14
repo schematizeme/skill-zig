@@ -3,7 +3,9 @@ name: schematize-zig
 metadata:
   version: 0.4.2
 description: >-
-  Padrões de engenharia da casa para Zig: baixo nível, interop C, alocadores explícitos. Use ao projetar, gerar, revisar ou refatorar serviço, biblioteca, binding C, parser ou deploy em projeto com build.zig/build.zig.zon/*.zig, ou ao escolher Zig no rol (fit + ADR). Mantém os pisos de segurança, IAM, leak-test e archive da base.
+  Padrões de engenharia para Zig: baixo nível, interop C, alocadores explícitos. Use ao projetar, revisar ou
+  refatorar serviço, biblioteca, binding C ou parser em projeto com build.zig/build.zig.zon/*.zig, ou ao escolher Zig
+  no rol (fit + ADR). Pisos de segurança, IAM, leak-test e archive.
 ---
 
 # Padrões de Engenharia da Casa — Zig

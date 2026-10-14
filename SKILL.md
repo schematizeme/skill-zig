@@ -1,7 +1,7 @@
 ---
 name: schematize-zig
 metadata:
-  version: 0.5.1
+  version: 0.6.0
 description: >-
   Engenharia Zig: baixo nível, interop C, alocadores explícitos. Use ao tocar build.zig/*.zig (serviço, lib, binding C, parser) ou ao escolher Zig no rol por fit + ADR.
 ---
@@ -10,7 +10,7 @@ description: >-
 
 Conjunto normativo que rege como software de sistema é projetado, construído, testado e operado aqui **com Zig como linguagem**. Mesma base normativa das demais skills da casa; o que muda é o idioma, o build (`zig build`), o gerenciamento de memória (manual, por **allocators**, sem GC), o modelo de erro (**error unions** `!T`), a interop com C e o ecossistema.
 
-**Versão:** skill `schematize-zig` v0.5.1. Changelog em `CHANGELOG.md`.
+**Versão:** skill `schematize-zig` v0.6.0. Changelog em `CHANGELOG.md`.
 
 ## Zig no rol sancionado (fit, não gosto)
 

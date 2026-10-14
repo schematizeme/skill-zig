@@ -1,7 +1,7 @@
 ---
 name: schematize-zig
 metadata:
-  version: 0.4.2
+  version: 0.5.0
 description: >-
   Padrões de engenharia para Zig: baixo nível, interop C, alocadores explícitos. Use ao projetar, revisar ou
   refatorar serviço, biblioteca, binding C ou parser em projeto com build.zig/build.zig.zon/*.zig, ou ao escolher Zig
@@ -12,7 +12,7 @@ description: >-
 
 Conjunto normativo que rege como software de sistema é projetado, construído, testado e operado aqui **com Zig como linguagem**. Mesma base normativa das demais skills da casa; o que muda é o idioma, o build (`zig build`), o gerenciamento de memória (manual, por **allocators**, sem GC), o modelo de erro (**error unions** `!T`), a interop com C e o ecossistema.
 
-**Versão:** skill `schematize-zig` v0.4.2. Changelog em `CHANGELOG.md`.
+**Versão:** skill `schematize-zig` v0.5.0. Changelog em `CHANGELOG.md`.
 
 ## Zig no rol sancionado (fit, não gosto)
 

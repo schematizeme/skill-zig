@@ -3,6 +3,15 @@
 Todas as mudanças relevantes deste pacote, no formato [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 com versionamento [SemVer](https://semver.org/lang/pt-BR/).
 
+## [0.5.1] — 2026-10-14
+Observabilidade deixa de duplicar a skill dona do tema.
+
+### Alterado
+- `references/observabilidade.md` reduzido ao específico da linguagem, com ponteiro `schematize-observability -> references/...` para o padrão (OTel, Collector, SLO, alertas, healthchecks, stack): o arquivo repetia o que a skill dona do tema passou a ter, e a cópia deriva. Fica o Zig: `std.log` com scopes e `logFn` JSON, `/metrics`, o gap do OTel nativo (rotas a/b/c), profiling com símbolos nativos.
+
+### Alterado
+- Blocos herdados ressincronizados com a `schematize-engineering` v0.27.0 (`tools/sync-herdados.mjs`): orquestração com a regra de imagem (nunca pelo Claude; detecta Codex/Gemini e pergunta ao usuário qual usar, Codex como sugestão) e `schematize overdev delegar` (comando do app) no lugar do falso nome de skill `schematize-overdev`.
+
 ## [0.5.0] — 2026-10-14
 Saneamento transversal das skills de linguagem (coerência com a base e fatos verificados).
 

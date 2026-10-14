@@ -1,42 +1,19 @@
 # Observabilidade, Healthchecks, Performance e FinOps — Zig
 
 
-> **PONTEIRO, não cópia.** A normativa deste tema é da base: **`schematize-engineering`** →
-> `references/observabilidade.md`. Leia lá primeiro; aqui fica **só o que muda em Zig**.
->
-> **Onde este arquivo divergir da base, a BASE MANDA** (`SKILL.md` §"Precedência e herança").
-> Em 2026-08-21 os blocos idênticos à base foram **podados mecanicamente** (`tools/podar-clone.mjs`),
-> e é por isso que a numeração **salta**: o número é o da base, e o item ausente aqui é o que **não
-> muda nesta linguagem** — procure-o lá.
+> **PONTEIRO, não cópia.** O padrão (OpenTelemetry, Collector, sinais correlacionados, SLO, alertas, dashboards
+> como código, stack de referência) é da **`schematize-observability`** (`schematize-observability -> SKILL.md` e
+> `references/`); o piso da base está em `schematize-engineering -> references/observabilidade.md`. Aqui fica
+> **só o que muda em Zig**: `std.log` com scopes, `/metrics` como chão maduro, o gap honesto do OTel in-process,
+> profiling com símbolos nativos. **Onde divergir, a base e a `schematize-observability` mandam**
+> (`SKILL.md` §"Precedência e herança"); a numeração salta porque o número é o da base.
 
 ## 16. Observabilidade
 
-**Stack obrigatória (LGTM+):** toda ferramenta/serviço criado ou atualizado —
-**inclusive o `<projeto>_ops`** — nasce com observabilidade **integrada de ponta a
-ponta**, nunca como extra depois:
-
-- **Instrumentação:** OpenTelemetry como alvo (traces, métricas e logs correlacionados
-  por `trace_id`; exemplars ligando métrica↔trace). **Em Zig o binding nativo é jovem**
-  — a estratégia real está em §16.3.
-
-- **Coleta:** Grafana Alloy (coletor/agente OTel) — em Zig ele carrega **mais** peso
-  do enriquecimento (ver §16.3).
-
-- **Backends:** Loki (logs), Tempo (traces), Prometheus (scrape/local) + **Mimir**
-  (métricas long-term, HA, multi-tenant); **SHOULD** Pyroscope (profiling contínuo,
-  §30.1).
-
-- **Visualização e alerta:** Grafana — dashboards e regras de alerta **versionados como
-  código**, entregues junto do serviço.
-
-- **Deploy:** **Helm chart** versionado por serviço — o repo entrega seu chart +
-  dashboards + alertas com o código.
-
-- Um serviço só é "pronto" se expõe `/metrics`, emite logs estruturados e (na medida
-  em que o ecossistema permite) traces, e sobe com dashboard + alertas + chart (§35).
-  Avalie e acrescente o que fizer sentido (Grafana OnCall, k6 para carga, Beyla/eBPF
-  para auto-instrumentação — **em Zig o eBPF/Beyla no sidecar é aliado forte**, contorna
-  a imaturidade do binding in-process).
+**Em Zig o binding OpenTelemetry nativo é jovem** — a estratégia real está em §16.3. O piso "todo serviço
+observável" (logs estruturados com `trace_id`, `/metrics`, dashboard + alertas + chart, §35) não muda; o COMO
+muda. O Collector (Alloy) carrega **mais** peso do enriquecimento (`schematize-observability -> references/padrao-otel.md`),
+e **Beyla/eBPF no sidecar é aliado forte**: contorna a imaturidade do binding in-process.
 
 ### 16.1 Logs — `std.log` com scopes + handler JSON
 

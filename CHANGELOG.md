@@ -6,6 +6,10 @@ com versionamento [SemVer](https://semver.org/lang/pt-BR/).
 ## [0.6.0] — 2026-10-14
 Gate da skill-dev verde, ponteiros para as skills novas e testes dos scripts.
 
+### Corrigido
+
+- `test-skeleton.test.sh`/`smoke-selfcheck.test.sh`: o `trap` de limpeza vira função com `p` local (fim do SC2154); scripts no piso de shell.
+
 ### Adicionado
 - `scripts/archive-secret-scan.test.sh`, `check-diff.test.sh`, `smoke-selfcheck.test.sh` e `test-skeleton.test.sh` com vermelho e verde plantados (repo/servidor temporários, segredos falsos montados em tempo de execução): o gate da skill-dev reprovava `script-sem-teste` e um gate sem vermelho plantado é decoração.
 

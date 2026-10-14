@@ -8,7 +8,8 @@
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 W="$(mktemp -d)"; PIDS=()
-trap 'for p in "${PIDS[@]}"; do kill "$p" 2>/dev/null; done; rm -rf "$W"' EXIT
+limpa() { local p; for p in "${PIDS[@]}"; do kill "$p" 2>/dev/null; done; rm -rf "$W"; }
+trap limpa EXIT
 rc=0
 
 command -v python3 >/dev/null && command -v curl >/dev/null || { echo "smoke-selfcheck.test: SKIP (precisa de python3 e curl)"; exit 0; }

@@ -54,6 +54,8 @@
   desde que as migrations sejam **SQL versionado e reversível**. Zig não precisa de um
   runner Zig-native pra isso — a fonte da verdade é o SQL versionado.
 
+- **Operar/migrar Postgres tem dona:** `schematize-postgres` → `references/locks-e-migrations.md` (migration segura, expand-contract, lock_timeout) e `references/pooling.md` (pool/PgBouncer, dimensionamento). Desenho de schema: `schematize-database`.
+
 ### 10.2 SQL parametrizado — o piso inegociável em Zig
 
 Zig **não tem** `format!` do Rust, mas **montar query com `std.fmt.allocPrint` /
@@ -106,6 +108,8 @@ acesso a Postgres via driver Zig com binds **ou** `libpq`/`@cImport` (`PQexecPar
 
 - Quebra de contrato exige nova versão + janela de deprecação ≥ 90 dias com headers
   `Deprecation` e `Sunset`.
+
+- **Contrato de API tem dona:** `schematize-api` → `references/contrato-rest.md` (OpenAPI 3.1 contract-first, erros), `references/idempotencia.md` (`Idempotency-Key`) e `references/versionamento-deprecacao.md` (`Deprecation`/`Sunset`); aqui só o recorte da linguagem.
 
 ## 18. Resiliência
 

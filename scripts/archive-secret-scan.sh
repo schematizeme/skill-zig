@@ -26,7 +26,7 @@ fi
 echo "== scan regex (gitleaks ausente) =="
 FAIL=0
 # padrões de segredo/PII comuns (chaves, JWT, bearer, CPF, email em massa, cartão)
-PAT='(AKIA[0-9A-Z]{16})|(sk-[A-Za-z0-9]{20,})|(ghp_[A-Za-z0-9]{36})|(eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,})|(-----BEGIN [A-Z ]*PRIVATE KEY-----)|([Bb]earer\s+[A-Za-z0-9._-]{20,})|(password["'\'' :=]+[^ \n"'\'']{6,})|([0-9]{3}\.[0-9]{3}\.[0-9]{3}-[0-9]{2})'
+PAT='(AKIA[0-9A-Z]{16})|(sk-[A-Za-z0-9]{20,})|(ghp_[A-Za-z0-9]{36})|(eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,})|(-----BEGIN [A-Z ]*PRIVATE KEY-----)|([Bb]earer\s+[A-Za-z0-9._-]{20,})|(password["'\'' :=]+[^ "'\'']{6,})|([0-9]{3}\.[0-9]{3}\.[0-9]{3}-[0-9]{2})'
 for f in "${MDS[@]}"; do
   hit=$(grep -nE "$PAT" "$f" 2>/dev/null || true)
   if [[ -n "$hit" ]]; then

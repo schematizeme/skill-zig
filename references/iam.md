@@ -10,6 +10,8 @@
 > na negação deceptiva; **CSPRNG obrigatório** em toda aleatoriedade de segurança; *"framework de
 > auth pronto ≠ IAM da casa"*; §2.1 **parâmetros mínimos de argon2id**. Aqui elas aparecem só no que
 > muda de linguagem (a biblioteca, o tipo, o runtime).
+>
+> **Skill dona do IAM:** `schematize-iam` → `references/topologia.md` (broker `auth.<domínio>`), `references/authz-rebac.md`, `references/sessao.md`, `references/fatores.md`. Este arquivo é só o recorte idiomático; não recopie fluxo, fator ou modelo ReBAC aqui.
 
 Piso normativo de **identidade, autenticação e autorização**, válido para toda skill da
 casa. **Todo projeto começa com um IAM robusto por desenho** — segurança é inegociável.

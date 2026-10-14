@@ -14,6 +14,12 @@ BASE="${1:-origin/main}"
 FAIL=0
 RED=$'\033[0;31m'; YLW=$'\033[0;33m'; GRN=$'\033[0;32m'; RST=$'\033[0m'
 
+# Base inexistente NAO pode virar verde: `git diff` falha, FILES fica vazio e o gate diria OK sem ter olhado nada.
+if ! git rev-parse --verify -q "$BASE^{commit}" >/dev/null 2>&1; then
+  echo "${RED}✗ BLOQUEIA${RST} base '$BASE' não resolve para um commit (ou não é repo git) — o gate não olhou nada"
+  exit 1
+fi
+
 # Arquivos de código alterados (exclui exceções da §6).
 mapfile -t FILES < <(git diff --name-only "$BASE"...HEAD 2>/dev/null \
   | grep -E '\.(zig|go|rs|ts|tsx|js|mjs|jsx)$' \
@@ -75,7 +81,7 @@ scan 'NEXT_PUBLIC_[A-Z_]*(SECRET|KEY|TOKEN|PASSWORD|PRIVATE)' 'segredo exposto v
 scan 'rejectUnauthorized:\s*false|InsecureSkipVerify:\s*true|verify\s*=\s*False' 'verificação TLS desabilitada (§37)'
 scan 'Math\.random\(\).*(token|secret|session|nonce|reset)' 'Math.random em contexto de segredo — use CSPRNG (§14/§37)'
 scan 'eslint-disable.*security|//\s*nolint:.*(gosec|sec)|#\s*nosec' 'desabilitando regra de segurança inline (§37)'
-scan 'Access-Control-Allow-Origin["'\'' :]*\*' 'CORS * — allowlist explícita (§37)'
+scan 'Access-Control-Allow-Origin["'\'' :,]*\*' 'CORS * — allowlist explícita (§37)'
 scan '(query|exec|raw)\(\s*[`"'\''].*\$\{|"\s*\+\s*.*(req|input|param|body)' 'possível SQL/comando por concatenação (§10/§37)'
 scan 'catch\s*\(\s*\)\s*\{\s*\}|except\s*:\s*pass|catch\s*\{\s*\}' 'erro engolido (§37)'
 scan '@ts-ignore|: any\b|interface\{\}' 'tipo silenciado (any/@ts-ignore/interface{}) (§37)'
@@ -89,7 +95,7 @@ fi
 
 # 4) §3 — backend novo em PHP
 php=$(git diff --name-only "$BASE"...HEAD 2>/dev/null | grep -E '\.php$' || true)
-[[ -n "$php" ]] && block "arquivo PHP no diff — PHP é proibido, migrar (§3.2): $php"
+[[ -n "$php" ]] && block "arquivo PHP no diff — PHP migra por funcionalidade quando tocado (schematize-engineering → references/linguagens.md §2): $php"
 
 echo
 if (( FAIL )); then
